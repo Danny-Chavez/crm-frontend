@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* === Utilidades personalizadas === */
+@layer utilities {
+  .input-base {
+    @apply w-full p-2 border border-gray-300 rounded-lg text-sm
+           focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+           transition;
+  }
+
+  .checkbox-base {
+    @apply w-4 h-4 text-blue-600 border-gray-300 rounded
+           focus:ring-blue-500;
+  }
+}
+/* ============================
+   ANIMACIÓN GLOBAL (fade + slide)
+   ============================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* ============================
+   ANIMACIÓN DE TARJETAS (Dashboard)
+   ============================ */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.4s ease-out forwards;
+}
+
+.os-info {
+  background: #f0f9ff;
+  border-left: 4px solid #3b82f6;
+  padding: 8px;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.badge-os {
+  background: #3b82f6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.os-detalle p {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+.btn-ver-os {
+  margin-top: 6px;
+  background: #2563eb;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+
+

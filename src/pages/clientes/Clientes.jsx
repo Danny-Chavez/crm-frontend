@@ -1,0 +1,184 @@
+import { useEffect, useState } from "react";
+import api from "../../utils/axios";
+import ClienteForm from "./ClienteForm";
+
+const Clientes = () => {
+  const [clientes, setClientes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCliente, setSelectedCliente] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  // ⭐ Filtro por RUT
+  const [filtroRut, setFiltroRut] = useState("");
+
+  // ⭐ Modo solo lectura (Ver)
+  const [viewMode, setViewMode] = useState(false);
+
+  const fetchClientes = async () => {
+    try {
+      const res = await api.get("/api/clientes");
+      setClientes(res.data);
+    } catch (err) {
+      console.error("Error cargando clientes:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  const handleEdit = (cliente) => {
+    setSelectedCliente(cliente);
+    setViewMode(false);
+    setShowForm(true);
+  };
+
+  const handleView = (cliente) => {
+    setSelectedCliente(cliente);
+    setViewMode(true);
+    setShowForm(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedCliente(null);
+    setViewMode(false);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("¿Eliminar cliente?")) return;
+
+    try {
+      await api.delete(`/api/clientes/${id}`);
+      fetchClientes();
+    } catch (err) {
+      console.error("Error eliminando cliente:", err);
+    }
+  };
+
+  if (loading) return <p>Cargando clientes...</p>;
+
+  // ⭐ Filtrado por RUT
+  const clientesFiltrados = clientes.filter((c) =>
+    filtroRut ? c.rut?.toLowerCase().includes(filtroRut.toLowerCase()) : true
+  );
+
+  return (
+    <div className="p-6 flex flex-col gap-6">
+
+      {/* Título */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Clientes</h1>
+
+        <button
+          onClick={handleCreate}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white shadow-md hover:shadow-lg hover:bg-blue-700 transition-all duration-300"
+        >
+          + Nuevo Cliente
+        </button>
+      </div>
+
+      {/* ⭐ Filtro por RUT — estilo OS */}
+      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Filtros</h2>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-600">RUT / Empresa</label>
+            <input
+              type="text"
+              className="input-base"
+              placeholder="Ej: 12.345.678-K"
+              value={filtroRut}
+              onChange={(e) => setFiltroRut(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Formulario */}
+      {showForm && (
+        <ClienteForm
+          cliente={selectedCliente}
+          viewMode={viewMode}
+          onClose={() => setShowForm(false)}
+          onSaved={fetchClientes}
+        />
+      )}
+
+      {/* Tabla */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100 text-gray-700">
+            <tr>
+              <th className="p-3 border">RUT</th>
+              <th className="p-3 border">Empresa</th>
+              <th className="p-3 border">Teléfono</th>
+              <th className="p-3 border">Email</th>
+              <th className="p-3 border">Vendedor</th>
+              <th className="p-3 border">Estado</th>
+              <th className="p-3 border text-center">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {clientesFiltrados.map((c) => (
+              <tr key={c.id} className="hover:bg-gray-50 transition">
+                <td className="p-3 border">{c.rut}</td>
+                <td className="p-3 border">{c.nombre_empresa}</td>
+                <td className="p-3 border">{c.telefono}</td>
+                <td className="p-3 border">{c.email}</td>
+                <td className="p-3 border">{c.vendedor}</td>
+                <td className="p-3 border">{c.estado}</td>
+
+                {/* ⭐ Botones corporativos */}
+                <td className="p-3 border flex gap-2 justify-center items-center">
+
+                  <button
+                    onClick={() => handleView(c)}
+                    className="px-3 py-1 rounded-lg bg-gray-600 text-white text-xs hover:bg-gray-700 transition"
+                  >
+                    Ver
+                  </button>
+
+                  <button
+                    onClick={() => handleEdit(c)}
+                    className="px-3 py-1 rounded-lg bg-yellow-500 text-white text-xs hover:bg-yellow-600 transition"
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs hover:bg-red-700 transition"
+                  >
+                    Eliminar
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      (window.location.href = `/clientes/${c.id}/comercios`)
+                    }
+                    className="px-3 py-1 rounded-lg bg-green-600 text-white text-xs hover:bg-green-700 transition"
+                  >
+                    Comercios
+                  </button>
+
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  );
+};
+
+export default Clientes;
+
+
+
+
