@@ -1,9 +1,9 @@
 import api from "../utils/axios";
 
 export const tecnicosService = {
-  getAll: () => api.get("/api/tecnicos"),
+  getAll: () => api.get("/tecnicos"),
 
   // ⭐ opcional: útil para dashboards o ver perfil técnico
-  getById: (id) => api.get(`/api/tecnicos/${id}`),
+  getById: (id) => api.get(`/tecnicos/${id}`),
 };
 

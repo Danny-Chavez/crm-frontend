@@ -2,10 +2,10 @@ import api from "../utils/axios";
 
 export const historialService = {
   // Obtener historial de una OS
-  getByOrden: (id) => api.get(`/api/historial/${id}`),
+  getByOrden: (id) => api.get(`/historial/${id}`),
 
   // Agregar evento al historial
-  add: (id, data) => api.post(`/api/historial/${id}`, data),
+  add: (id, data) => api.post(`/historial/${id}`, data),
 };
 
 

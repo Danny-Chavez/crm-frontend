@@ -5,16 +5,16 @@ export const ordenesService = {
   // OS GLOBAL
   // ============================
 
-  getAll: () => api.get("/api/ordenes"),
+  getAll: () => api.get("/ordenes"),
 
-  getById: (id) => api.get(`/api/ordenes/${id}`),
+  getById: (id) => api.get(`/ordenes/${id}`),
 
   // ============================
   // CREAR OS
   // ============================
   create: async (data) => {
     try {
-      const res = await api.post("/api/ordenes", data);
+      const res = await api.post("/ordenes", data);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (create):", err.response?.data || err);
@@ -27,7 +27,7 @@ export const ordenesService = {
   // ============================
   update: async (id, data) => {
     try {
-      const res = await api.put(`/api/ordenes/${id}`, data);
+      const res = await api.put(`/ordenes/${id}`, data);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (update):", err.response?.data || err);
@@ -40,7 +40,7 @@ export const ordenesService = {
   // ============================
   remove: async (id) => {
     try {
-      const res = await api.delete(`/api/ordenes/${id}`);
+      const res = await api.delete(`/ordenes/${id}`);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (remove):", err.response?.data || err);
@@ -53,7 +53,7 @@ export const ordenesService = {
   // ============================
   getByTerminal: async (terminalId) => {
     try {
-      const res = await api.get(`/api/ordenes/terminal/${terminalId}`);
+      const res = await api.get(`/ordenes/terminal/${terminalId}`);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (getByTerminal):", err.response?.data || err);
@@ -66,7 +66,7 @@ export const ordenesService = {
   // ============================
   cerrar: async (id) => {
     try {
-      const res = await api.patch(`/api/ordenes/cerrar/${id}`);
+      const res = await api.patch(`/ordenes/cerrar/${id}`);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (cerrar):", err.response?.data || err);
@@ -79,7 +79,7 @@ export const ordenesService = {
   // ============================
   clonar: async (id) => {
     try {
-      const res = await api.post(`/api/ordenes/${id}/clonar`);
+      const res = await api.post(`/ordenes/${id}/clonar`);
       return res.data;
     } catch (err) {
       console.error("❌ ERROR OS FRONT (clonar):", err.response?.data || err);

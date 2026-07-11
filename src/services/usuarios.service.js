@@ -1,13 +1,13 @@
 import api from "../utils/axios";
 
 export const usuariosService = {
-  getAll: () => api.get("/api/usuarios"),
+  getAll: () => api.get("/usuarios"),
 
-  getById: (id) => api.get(`/api/usuarios/${id}`),
+  getById: (id) => api.get(`/usuarios/${id}`),
 
-  create: (data) => api.post("/api/usuarios", data),
+  create: (data) => api.post("/usuarios", data),
 
-  update: (id, data) => api.put(`/api/usuarios/${id}`, data),
+  update: (id, data) => api.put(`/usuarios/${id}`, data),
 
-  delete: (id) => api.delete(`/api/usuarios/${id}`)
+  delete: (id) => api.delete(`/usuarios/${id}`)
 };
