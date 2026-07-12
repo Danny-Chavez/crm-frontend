@@ -50,11 +50,11 @@ export default function DashboardHome() {
           adjuntosRes,
           estadosRes,
         ] = await Promise.all([
-          api.get("/api/usuarios"),
-          api.get("/api/ordenes"),
-          api.get("/api/pipeline-stages"),
-          api.get("/api/adjuntos"),
-          api.get("/api/estados-os"),
+          api.get("/usuarios"),
+          api.get("/ordenes"),
+          api.get("/pipeline-stages"),
+          api.get("/adjuntos"),
+          api.get("/estados-os"),
         ]);
 
         // FILTRAR TÉCNICOS DESDE USUARIOS
