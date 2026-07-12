@@ -18,7 +18,7 @@ export default function OrdenesPorTerminal() {
 
   const cargarTerminal = async () => {
     try {
-      const res = await fetch(`/api/terminales/${id}`);
+      const res = await fetch(`/terminales/${id}`);
       const data = await res.json();
       setTerminal(data);
     } catch (err) {

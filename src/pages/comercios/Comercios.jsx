@@ -17,7 +17,7 @@ const Comercios = () => {
 
   const fetchCliente = async () => {
     try {
-      const res = await api.get(`/api/clientes/${cliente_id}`);
+      const res = await api.get(`/clientes/${cliente_id}`);
       setCliente(res.data);
     } catch (err) {
       console.error("Error cargando cliente:", err);
@@ -26,7 +26,7 @@ const Comercios = () => {
 
   const fetchComercios = async () => {
     try {
-      const res = await api.get(`/api/comercios/cliente/${cliente_id}`);
+      const res = await api.get(`/comercios/cliente/${cliente_id}`);
       setComercios(res.data);
     } catch (err) {
       console.error("Error cargando comercios:", err);
@@ -62,7 +62,7 @@ const Comercios = () => {
     if (!confirm("¿Eliminar comercio?")) return;
 
     try {
-      await api.delete(`/api/comercios/${comercioId}`);
+      await api.delete(`/comercios/${comercioId}`);
       fetchComercios();
     } catch (err) {
       console.error("Error eliminando comercio:", err);

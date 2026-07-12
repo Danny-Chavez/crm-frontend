@@ -22,12 +22,12 @@ const TerminalForm = ({ comercio_id, terminal, onClose, onSaved }) => {
 
     try {
       if (terminal) {
-        await api.put(`/api/terminales/${terminal.id}`, {
+        await api.put(`/terminales/${terminal.id}`, {
           comercio_id,
           ...form,
         });
       } else {
-        await api.post("/api/terminales", {
+        await api.post("/terminales", {
           comercio_id,
           ...form,
         });

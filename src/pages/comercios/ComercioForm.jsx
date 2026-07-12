@@ -49,9 +49,9 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
 
     try {
       if (comercio) {
-        await api.put(`/api/comercios/${comercio.id}`, payload);
+        await api.put(`/comercios/${comercio.id}`, payload);
       } else {
-        await api.post("/api/comercios", payload);
+        await api.post("/comercios", payload);
       }
 
       onSaved();

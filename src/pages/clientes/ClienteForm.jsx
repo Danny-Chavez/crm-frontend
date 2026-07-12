@@ -21,7 +21,7 @@ const ClienteForm = ({ cliente, onClose, onSaved }) => {
   useEffect(() => {
     const cargarVendedores = async () => {
       try {
-        const res = await api.get("/api/oportunidades/vendedores");
+        const res = await api.get("/oportunidades/vendedores");
         setVendedores(res.data);
       } catch (err) {
         console.error("Error cargando vendedores:", err);
@@ -57,9 +57,9 @@ const ClienteForm = ({ cliente, onClose, onSaved }) => {
       };
 
       if (cliente) {
-        await api.put(`/api/clientes/${cliente.id}`, payload);
+        await api.put(`/clientes/${cliente.id}`, payload);
       } else {
-        await api.post("/api/clientes", payload);
+        await api.post("/clientes", payload);
       }
 
       onSaved();

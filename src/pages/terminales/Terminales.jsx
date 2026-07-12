@@ -17,7 +17,7 @@ const Terminales = () => {
 
   const fetchComercio = async () => {
     try {
-      const res = await api.get(`/api/comercios/${comercio_id}`);
+      const res = await api.get(`/comercios/${comercio_id}`);
       setComercio(res.data);
     } catch (err) {
       console.error("Error cargando comercio:", err);
@@ -26,7 +26,7 @@ const Terminales = () => {
 
   const fetchTerminales = async () => {
     try {
-      const res = await api.get(`/api/terminales/comercio/${comercio_id}`);
+      const res = await api.get(`/terminales/comercio/${comercio_id}`);
       setTerminales(res.data);
     } catch (err) {
       console.error("Error cargando terminales:", err);
@@ -54,7 +54,7 @@ const Terminales = () => {
     if (!confirm("¿Eliminar terminal?")) return;
 
     try {
-      await api.delete(`/api/terminales/${terminalId}`);
+      await api.delete(`/terminales/${terminalId}`);
       fetchTerminales();
     } catch (err) {
       console.error("Error eliminando terminal:", err);

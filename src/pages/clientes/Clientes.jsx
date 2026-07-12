@@ -16,7 +16,7 @@ const Clientes = () => {
 
   const fetchClientes = async () => {
     try {
-      const res = await api.get("/api/clientes");
+      const res = await api.get("/clientes");
       setClientes(res.data);
     } catch (err) {
       console.error("Error cargando clientes:", err);
@@ -51,7 +51,7 @@ const Clientes = () => {
     if (!confirm("¿Eliminar cliente?")) return;
 
     try {
-      await api.delete(`/api/clientes/${id}`);
+      await api.delete(`/clientes/${id}`);
       fetchClientes();
     } catch (err) {
       console.error("Error eliminando cliente:", err);

@@ -140,7 +140,7 @@ export default function PipelineConfig() {
      4. Cargar etapas desde backend (TODAS)
      ============================ */
   useEffect(() => {
-    api.get("/api/pipeline-stages/all").then((res) => {
+    api.get("/pipeline-stages/all").then((res) => {
       const sorted = res.data.sort((a, b) => a.orden - b.orden);
       setStages(sorted);
     });
@@ -157,7 +157,7 @@ export default function PipelineConfig() {
       orden: stages.length + 1,
     };
 
-    const res = await api.post("/api/pipeline-stages", payload);
+    const res = await api.post("/pipeline-stages", payload);
 
     const created = res.data?.id ? res.data : { ...payload, id: Date.now() };
 
@@ -177,7 +177,7 @@ export default function PipelineConfig() {
      6. Eliminar etapa
      ============================ */
   const handleDeleteStage = async (id) => {
-    await api.delete(`/api/pipeline-stages/${id}`);
+    await api.delete(`/pipeline-stages/${id}`);
     setStages(stages.filter((s) => s.id !== id));
   };
 
@@ -210,7 +210,7 @@ export default function PipelineConfig() {
       visible: editForm.visible,
     };
 
-    const res = await api.put(`/api/pipeline-stages/${editingStage.id}`, updated);
+    const res = await api.put(`/pipeline-stages/${editingStage.id}`, updated);
 
     const finalData = res.data?.id ? res.data : { ...editingStage, ...updated };
 
@@ -242,7 +242,7 @@ export default function PipelineConfig() {
 
     setStages(updated);
 
-    await api.put("/api/pipeline-stages/bulk/reorder", updated);
+    await api.put("/pipeline-stages/bulk/reorder", updated);
   };
 
   /* ============================

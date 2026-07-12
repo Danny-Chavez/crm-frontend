@@ -11,7 +11,7 @@ const TerminalDetalles = () => {
 
   const fetchTerminal = async () => {
     try {
-      const res = await api.get(`/api/terminales/${id}`);
+      const res = await api.get(`/terminales/${id}`);
       setTerminal(res.data);
     } catch (err) {
       console.error("Error obteniendo terminal:", err);
