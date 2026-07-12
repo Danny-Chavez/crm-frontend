@@ -1,7 +1,17 @@
+import { useEffect, useState } from "react";
 import useAuth from "../auth/useAuth";
+import { configuracionService } from "../services/configuracion.service";
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const [logo, setLogo] = useState(null);
+
+  // Cargar logo corporativo desde la BD
+  useEffect(() => {
+    configuracionService.getLogo().then((res) => {
+      setLogo(res.data.logo);
+    });
+  }, []);
 
   // Detectar nombre real del usuario
   const displayName =
@@ -18,13 +28,21 @@ export default function Header() {
     <header className="flex items-center justify-between px-6 py-4 bg-white 
                        border border-gray-200 rounded-xl shadow-sm mb-6">
 
-      <h1 className="text-lg font-semibold text-gray-700">
-        CRM - TAS Chile S.A. 
-      </h1>
+      {/* Logo + título */}
+      <div className="flex items-center gap-3">
+        {logo ? (
+          <img src={logo} alt="Logo" className="h-10 object-contain" />
+        ) : (
+          <span className="text-xl font-bold text-primary">TAS</span>
+        )}
 
+        <h1 className="text-lg font-semibold text-gray-700">
+          CRM - TAS Chile S.A.
+        </h1>
+      </div>
+
+      {/* Avatar */}
       <div className="flex items-center gap-4">
-
-        {/* Avatar */}
         <div className="relative group">
           <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold">
             {initial}
@@ -46,11 +64,11 @@ export default function Header() {
             </button>
           </div>
         </div>
-
       </div>
     </header>
   );
 }
+
 
 
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import useAuth from "../auth/useAuth";
 import api from "../utils/axios";   // ⭐ IMPORTANTE
-import { logoService } from "../services/logo.service";
+import { configuracionService } from "../services/configuracion.service";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
@@ -19,9 +19,11 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Cargar logo dinámico
+  // ⭐ Cargar logo dinámico desde la BD
   useEffect(() => {
-    logoService.get().then((res) => setLogo(res.data.url));
+    configuracionService.getLogo().then((res) => {
+      setLogo(res.data.logo);
+    });
   }, []);
 
   const handleChange = (e) => {
@@ -38,7 +40,6 @@ export default function LoginPage() {
     try {
       // ⭐ LOGIN REAL AL BACKEND
       const res = await api.post("/auth/login", form);
-
 
       // ⭐ GUARDAR TOKEN CORRECTO
       localStorage.setItem("token", res.data.token);
@@ -154,6 +155,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
 
 

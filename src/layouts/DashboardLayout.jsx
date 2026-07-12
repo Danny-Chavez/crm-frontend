@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { logoService } from "../services/logo.service";
+import { configuracionService } from "../services/configuracion.service";
 import Header from "../components/Header";
 import { Outlet, Link, useLocation } from "react-router-dom";
 
@@ -20,8 +20,11 @@ export default function DashboardLayout() {
   const [crmOpen, setCrmOpen] = useState(true);
   const { pathname } = useLocation();
 
+  // Cargar logo desde la BD
   useEffect(() => {
-    logoService.get().then((res) => setLogo(res.data.url));
+    configuracionService.getLogo().then((res) => {
+      setLogo(res.data.logo);
+    });
   }, []);
 
   // ⭐ MENÚ OPERATIVO
@@ -44,7 +47,6 @@ export default function DashboardLayout() {
     { label: "Logo", to: "/config/logo", icon: Cog6ToothIcon },
     { label: "Estados OS", to: "/estados-os", icon: WrenchScrewdriverIcon },
     { label: "Pipeline (config)", to: "/config/pipeline", icon: Cog6ToothIcon },
-
   ];
 
   return (
@@ -191,6 +193,7 @@ export default function DashboardLayout() {
     </div>
   );
 }
+
 
 
 

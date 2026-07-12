@@ -1,25 +1,42 @@
 import { useEffect, useState } from "react";
-import { logoService } from "../../services/logo.service";
+import { configuracionService } from "../../services/configuracion.service";
 
 export default function LogoPage() {
   const [logo, setLogo] = useState(null);
   const [archivo, setArchivo] = useState(null);
 
+  // Cargar logo desde la BD
   const cargarLogo = async () => {
-    const res = await logoService.get();
-    setLogo(res.data.url);
+    try {
+      const res = await configuracionService.getLogo();
+      setLogo(res.data.logo);
+    } catch (error) {
+      console.error("Error cargando logo:", error);
+    }
   };
 
   useEffect(() => {
     cargarLogo();
   }, []);
 
+  // Subir logo como Base64
   const subirLogo = async () => {
     if (!archivo) return;
 
-    await logoService.upload(archivo);
-    setArchivo(null);
-    cargarLogo();
+    const reader = new FileReader();
+
+    reader.onloadend = async () => {
+      try {
+        const base64 = reader.result;
+        await configuracionService.updateLogo(base64);
+        setArchivo(null);
+        cargarLogo();
+      } catch (error) {
+        console.error("Error subiendo logo:", error);
+      }
+    };
+
+    reader.readAsDataURL(archivo);
   };
 
   return (
@@ -56,3 +73,4 @@ export default function LogoPage() {
     </div>
   );
 }
+
