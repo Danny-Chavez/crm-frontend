@@ -223,11 +223,11 @@ export default function Pipeline() {
           vendedoresRes,
           productosRes,
         ] = await Promise.all([
-          api.get("/api/pipeline-stages"),
-          api.get("/api/pipeline-stages/all"),
-          api.get("/api/oportunidades"),
-          api.get("/api/oportunidades/vendedores"),
-          api.get("/api/oportunidades/productos"),
+          api.get("/pipeline-stages"),
+          api.get("/pipeline-stages/all"),
+          api.get("/oportunidades"),
+          api.get("/oportunidades/vendedores"),
+          api.get("/oportunidades/productos"),
         ]);
 
         const visible = visibleRes.data
@@ -352,7 +352,7 @@ export default function Pipeline() {
     };
 
     try {
-      const res = await api.post("/api/oportunidades", newOpportunity);
+      const res = await api.post("/oportunidades", newOpportunity);
 
       setOpportunities((prev) => [...prev, res.data]);
 
@@ -478,7 +478,7 @@ export default function Pipeline() {
 
     try {
       const res = await api.put(
-        `/api/oportunidades/${editingOpportunity.id}`,
+        `/oportunidades/${editingOpportunity.id}`,
         updated
       );
 
@@ -520,7 +520,7 @@ export default function Pipeline() {
     );
 
     try {
-      await api.patch(`/api/oportunidades/${opportunityId}/stage`, {
+      await api.patch(`/oportunidades/${opportunityId}/stage`, {
         stage: newStageId,
       });
     } catch (err) {
