@@ -11,6 +11,8 @@ import {
 import { ordenesService } from "../../services/ordenes.service";
 
 export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
+
+    console.log("ORDENES RECIBIDAS:", ordenes);  // ⭐ AGREGA ESTO
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [filtroCategoria, setFiltroCategoria] = useState("todos");
   const [filtroComercio, setFiltroComercio] = useState("");
@@ -22,17 +24,13 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
   const handleClone = async (id) => {
     try {
       const nueva = await ordenesService.clonar(id);
-
-      // Abrir la OS clonada directamente en el formulario
       onEdit(nueva);
-
     } catch (err) {
       console.error("❌ Error clonando OS:", err);
       alert("Error al clonar OS");
     }
   };
 
-  // Normalizador robusto
   const normalizar = (v) =>
     v
       ?.toLowerCase()
@@ -40,7 +38,6 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
       .replace(/[\u0300-\u036f]/g, "")
       .trim();
 
-  // BADGES CORPORATIVOS TAS CHILE
   const badgeEstado = (estado) => {
     const e = normalizar(estado);
     if (e.includes("pend")) return "bg-[#F97316]/20 text-[#C65E12]";
@@ -219,6 +216,11 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
             <th className="p-4 font-semibold text-left">Cliente (RUT)</th>
             <th className="p-4 font-semibold text-left">Estado</th>
             <th className="p-4 font-semibold text-left">Fecha creación</th>
+
+            {/* ⭐ NUEVO */}
+            <th className="p-4 font-semibold text-left">Técnico</th>
+            <th className="p-4 font-semibold text-left">Categoría</th>
+
             <th className="p-4 font-semibold text-right">Acciones</th>
           </tr>
         </thead>
@@ -234,7 +236,6 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
               <td className="p-4 font-semibold text-blue-600 flex flex-col">
                 <span>OS #{o.id}</span>
 
-                {/* ⭐ Mostrar trazabilidad si la OS fue clonada */}
                 {o.clonada_de && (
                   <span className="text-xs text-purple-700 bg-purple-100 border border-purple-300 px-2 py-1 rounded mt-1 w-fit">
                     Clonada desde #{o.clonada_de}
@@ -260,6 +261,16 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                   : ""}
               </td>
 
+              {/* ⭐ TÉCNICO */}
+              <td className="p-4">
+                {o.tecnico || "Sin técnico"}
+              </td>
+
+              {/* ⭐ CATEGORÍA */}
+              <td className="p-4">
+                {o.categoria || "Sin categoría"}
+              </td>
+
               <td className="p-4">
                 <div className="flex justify-end gap-2">
                   <button
@@ -276,7 +287,6 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     <PencilSquareIcon className="w-4 h-4" /> Editar
                   </button>
 
-                  {/* ⭐ BOTÓN CLONAR OS */}
                   <button
                     onClick={() => handleClone(o.id)}
                     className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
@@ -324,5 +334,6 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     </div>
   );
 }
+
 
 

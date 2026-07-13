@@ -615,6 +615,7 @@ const handleEditSave = async () => {
 
               codigo_comercio: "",
               observaciones: "",
+              rut_rl: "",
             });
           }}
           className="px-4 py-2 rounded-lg bg-blue-600 text-white shadow-md hover:shadow-lg hover:bg-blue-700 transition-all duration-300"
@@ -1029,6 +1030,19 @@ const handleEditSave = async () => {
                 />
               </div>
 
+              {/* RUT Representante Legal */}
+              <div>
+                <label className="text-sm text-gray-600">RUT Representante Legal</label>
+                <input
+                  type="text"
+                  name="rut_rl"
+                  value={form.rut_rl}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                  placeholder="Ej: 12.345.678-9"
+                />
+              </div>
+
               {/* Email RL */}
               <div>
                 <label className="text-sm text-gray-600">Email RL</label>
@@ -1399,6 +1413,19 @@ const handleEditSave = async () => {
                   value={form.nombre_rl}
                   onChange={handleChange}
                   className="w-full mt-1 p-2 border rounded-lg"
+                />
+              </div>
+
+              {/* RUT Representante Legal */}
+              <div>
+                <label className="text-sm text-gray-600">RUT Representante Legal</label>
+                <input
+                  type="text"
+                  name="rut_rl"
+                  value={form.rut_rl}
+                  onChange={handleChange}
+                  className="w-full mt-1 p-2 border rounded-lg"
+                  placeholder="Ej: 12.345.678-9"
                 />
               </div>
 
