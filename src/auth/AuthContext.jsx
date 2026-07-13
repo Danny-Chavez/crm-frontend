@@ -15,7 +15,7 @@ useEffect(() => {
     return;
   }
 
-  api.get("/api/auth/me")
+  api.get("/auth/me")
     .then((res) => {
       setUser(res.data.usuario);
     })
@@ -32,7 +32,7 @@ useEffect(() => {
 
   const login = async (email, password) => {
     try {
-      const res = await api.post("/api/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password });
 
       localStorage.setItem("token", res.data.access_token);
 
