@@ -213,285 +213,297 @@ export default function Pipeline() {
     return result;
   };
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [
-          visibleRes,
-          allRes,
-          oppRes,
-          vendedoresRes,
-          productosRes,
-        ] = await Promise.all([
-          api.get("/pipeline-stages"),
-          api.get("/pipeline-stages/all"),
-          api.get("/oportunidades"),
-          api.get("/oportunidades/vendedores"),
-          api.get("/oportunidades/productos"),
-        ]);
-
-        const visible = visibleRes.data
-          .map((s) => ({
-            id: s.id,
-            name: s.nombre,
-            color: s.color,
-            activo: s.activo,
-            orden: s.orden,
-            crea_os: s.crea_os,
-            es_final: s.es_final,
-          }))
-          .sort((a, b) => a.orden - b.orden);
-
-        const all = allRes.data
-          .map((s) => ({
-            id: s.id,
-            name: s.nombre,
-            color: s.color,
-            activo: s.activo,
-            orden: s.orden,
-            crea_os: s.crea_os,
-            es_final: s.es_final,
-            visible: s.visible,
-          }))
-          .sort((a, b) => a.orden - b.orden);
-
-        setStages(visible);
-        setAllStages(all);
-        setOpportunities(oppRes.data);
-
-        setVendedores(vendedoresRes.data);
-        setProductos(productosRes.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    load();
-  }, []);
-
-  /* ============================
-     Estados UI
-     ============================ */
-  const [showModal, setShowModal] = useState(false);
-  const [editingOpportunity, setEditingOpportunity] = useState(null);
-
-  const [form, setForm] = useState({
-    rut: "",
-    empresa: "",
-    producto: "",
-    monto: "",
-    vendedor: "",
-    telefono: "",
-    telefono2: "",
-    email: "",
-    tipo_ingreso: "",
-    stage: 1,
-
-    nombre: "",
-    apellido: "",
-    direccion: "",
-    comuna: "",
-    ciudad: "",
-    razon_social: "",
-    nombre_fantasia: "",
-    direccion_comercial: "",
-    nombre_rl: "",
-    email_rl: "",
-    giro: "",
-    tipo_abono: "",
-    tipo_folios: "",
-    chip: "",
-
-    codigo_comercio: "",
-    observaciones: "",
-  });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-  /* ============================
-     Crear oportunidad
-     ============================ */
-  const handleCreate = async () => {
-    const rutNormalizado = normalizarRut(form.rut);
-
-    if (form.rut && !validarRut(rutNormalizado)) {
-      alert("El RUT ingresado no es válido.");
-      return;
-    }
-
-    const newOpportunity = {
-      rut: rutNormalizado || null,
-      empresa: form.empresa,
-      producto: form.producto,
-      monto: Number(form.monto || 0),
-      vendedor: form.vendedor,
-      telefono: form.telefono,
-      telefono2: form.telefono2,
-      email: form.email,
-      tipo_ingreso: form.tipo_ingreso,
-      stage: Number(form.stage),
-
-      nombre: form.nombre,
-      apellido: form.apellido,
-      direccion: form.direccion,
-      comuna: form.comuna,
-      ciudad: form.ciudad,
-      razon_social: form.razon_social,
-      nombre_fantasia: form.nombre_fantasia,
-      direccion_comercial: form.direccion_comercial,
-      nombre_rl: form.nombre_rl,
-      email_rl: form.email_rl,
-      giro: form.giro,
-      tipo_abono: form.tipo_abono,
-      tipo_folios: form.tipo_folios,
-      chip: form.chip,
-
-      codigo_comercio: form.codigo_comercio,
-      observaciones: form.observaciones,
-    };
-
+useEffect(() => {
+  const load = async () => {
     try {
-      const res = await api.post("/oportunidades", newOpportunity);
+      const [
+        visibleRes,
+        allRes,
+        oppRes,
+        vendedoresRes,
+        productosRes,
+      ] = await Promise.all([
+        api.get("/pipeline-stages"),
+        api.get("/pipeline-stages/all"),
+        api.get("/oportunidades"),
+        api.get("/oportunidades/vendedores"),
+        api.get("/oportunidades/productos"),
+      ]);
 
-      setOpportunities((prev) => [...prev, res.data]);
+      const visible = visibleRes.data
+        .map((s) => ({
+          id: s.id,
+          name: s.nombre,
+          color: s.color,
+          activo: s.activo,
+          orden: s.orden,
+          crea_os: s.crea_os,
+          es_final: s.es_final,
+        }))
+        .sort((a, b) => a.orden - b.orden);
 
-      setShowModal(false);
+      const all = allRes.data
+        .map((s) => ({
+          id: s.id,
+          name: s.nombre,
+          color: s.color,
+          activo: s.activo,
+          orden: s.orden,
+          crea_os: s.crea_os,
+          es_final: s.es_final,
+          visible: s.visible,
+        }))
+        .sort((a, b) => a.orden - b.orden);
 
-      setForm({
-        rut: "",
-        empresa: "",
-        producto: "",
-        monto: "",
-        vendedor: "",
-        telefono: "",
-        telefono2: "",
-        email: "",
-        tipo_ingreso: "",
-        stage: stages.length > 0 ? stages[0].id : "",
+      setStages(visible);
+      setAllStages(all);
+      setOpportunities(oppRes.data);
 
-        nombre: "",
-        apellido: "",
-        direccion: "",
-        comuna: "",
-        ciudad: "",
-        razon_social: "",
-        nombre_fantasia: "",
-        direccion_comercial: "",
-        nombre_rl: "",
-        email_rl: "",
-        giro: "",
-        tipo_abono: "",
-        tipo_folios: "",
-        chip: "",
-
-        codigo_comercio: "",
-        observaciones: "",
-      });
+      setVendedores(vendedoresRes.data);
+      setProductos(productosRes.data);
     } catch (err) {
-      console.error("Error creando oportunidad", err);
-      alert("Error al crear la oportunidad.");
+      console.error(err);
     }
   };
 
-  /* ============================
-     Abrir modal de edición
-     ============================ */
-  const handleEditOpen = (opportunity) => {
-    setEditingOpportunity(opportunity);
+  load();
+}, []);
+
+/* ============================
+   Estados UI
+   ============================ */
+const [showModal, setShowModal] = useState(false);
+const [editingOpportunity, setEditingOpportunity] = useState(null);
+
+const [form, setForm] = useState({
+  rut: "",
+  empresa: "",
+  producto: "",
+  monto: "",
+  vendedor: "",
+  telefono: "",
+  telefono2: "",
+  email: "",
+  tipo_ingreso: "",
+  stage: 1,
+
+  nombre: "",
+  apellido: "",
+  direccion: "",
+  comuna: "",
+  ciudad: "",
+  razon_social: "",
+  nombre_fantasia: "",
+  direccion_comercial: "",
+  nombre_rl: "",
+  email_rl: "",
+  giro: "",
+  tipo_abono: "",
+  tipo_folios: "",
+  chip: "",
+
+  codigo_comercio: "",
+  observaciones: "",
+
+  rut_rl: "",   // ⭐ NUEVO CAMPO
+});
+
+const handleChange = (e) => {
+  setForm({ ...form, [e.target.name]: e.target.value });
+};
+
+/* ============================
+   Crear oportunidad
+   ============================ */
+const handleCreate = async () => {
+  const rutNormalizado = normalizarRut(form.rut);
+
+  if (form.rut && !validarRut(rutNormalizado)) {
+    alert("El RUT ingresado no es válido.");
+    return;
+  }
+
+  const newOpportunity = {
+    rut: rutNormalizado || null,
+    empresa: form.empresa,
+    producto: form.producto,
+    monto: Number(form.monto || 0),
+    vendedor: form.vendedor,
+    telefono: form.telefono,
+    telefono2: form.telefono2,
+    email: form.email,
+    tipo_ingreso: form.tipo_ingreso,
+    stage: Number(form.stage),
+
+    nombre: form.nombre,
+    apellido: form.apellido,
+    direccion: form.direccion,
+    comuna: form.comuna,
+    ciudad: form.ciudad,
+    razon_social: form.razon_social,
+    nombre_fantasia: form.nombre_fantasia,
+    direccion_comercial: form.direccion_comercial,
+    nombre_rl: form.nombre_rl,
+    email_rl: form.email_rl,
+    giro: form.giro,
+    tipo_abono: form.tipo_abono,
+    tipo_folios: form.tipo_folios,
+    chip: form.chip,
+
+    codigo_comercio: form.codigo_comercio,
+    observaciones: form.observaciones,
+
+    rut_rl: form.rut_rl,   // ⭐ NUEVO
+  };
+
+  try {
+    const res = await api.post("/oportunidades", newOpportunity);
+
+    setOpportunities((prev) => [...prev, res.data]);
+
+    setShowModal(false);
 
     setForm({
-      rut: opportunity.rut || "",
-      empresa: opportunity.empresa || "",
-      producto: opportunity.producto || "",
-      monto: Number(opportunity.amount || opportunity.monto || 0),
-      vendedor: opportunity.vendedor || "",
-      telefono: opportunity.telefono || "",
-      telefono2: opportunity.telefono2 || "",
-      email: opportunity.email || "",
-      tipo_ingreso: opportunity.tipo_ingreso || "",
-      stage: opportunity.stage,
+      rut: "",
+      empresa: "",
+      producto: "",
+      monto: "",
+      vendedor: "",
+      telefono: "",
+      telefono2: "",
+      email: "",
+      tipo_ingreso: "",
+      stage: stages.length > 0 ? stages[0].id : "",
 
-      nombre: opportunity.nombre || "",
-      apellido: opportunity.apellido || "",
-      direccion: opportunity.direccion || "",
-      comuna: opportunity.comuna || "",
-      ciudad: opportunity.ciudad || "",
-      razon_social: opportunity.razon_social || "",
-      nombre_fantasia: opportunity.nombre_fantasia || "",
-      direccion_comercial: opportunity.direccion_comercial || "",
-      nombre_rl: opportunity.nombre_rl || "",
-      email_rl: opportunity.email_rl || "",
-      giro: opportunity.giro || "",
-      tipo_abono: opportunity.tipo_abono || "",
-      tipo_folios: opportunity.tipo_folios || "",
-      chip: opportunity.chip || "",
+      nombre: "",
+      apellido: "",
+      direccion: "",
+      comuna: "",
+      ciudad: "",
+      razon_social: "",
+      nombre_fantasia: "",
+      direccion_comercial: "",
+      nombre_rl: "",
+      email_rl: "",
+      giro: "",
+      tipo_abono: "",
+      tipo_folios: "",
+      chip: "",
 
-      codigo_comercio: opportunity.codigo_comercio || "",
-      observaciones: opportunity.observaciones || "",
+      codigo_comercio: "",
+      observaciones: "",
+
+      rut_rl: "",   // ⭐ NUEVO
     });
+  } catch (err) {
+    console.error("Error creando oportunidad", err);
+    alert("Error al crear la oportunidad.");
+  }
+};
+
+/* ============================
+   Abrir modal de edición
+   ============================ */
+const handleEditOpen = (opportunity) => {
+  setEditingOpportunity(opportunity);
+
+  setForm({
+    rut: opportunity.rut || "",
+    empresa: opportunity.empresa || "",
+    producto: opportunity.producto || "",
+    monto: Number(opportunity.amount || opportunity.monto || 0),
+    vendedor: opportunity.vendedor || "",
+    telefono: opportunity.telefono || "",
+    telefono2: opportunity.telefono2 || "",
+    email: opportunity.email || "",
+    tipo_ingreso: opportunity.tipo_ingreso || "",
+    stage: opportunity.stage,
+
+    nombre: opportunity.nombre || "",
+    apellido: opportunity.apellido || "",
+    direccion: opportunity.direccion || "",
+    comuna: opportunity.comuna || "",
+    ciudad: opportunity.ciudad || "",
+    razon_social: opportunity.razon_social || "",
+    nombre_fantasia: opportunity.nombre_fantasia || "",
+    direccion_comercial: opportunity.direccion_comercial || "",
+    nombre_rl: opportunity.nombre_rl || "",
+    email_rl: opportunity.email_rl || "",
+    giro: opportunity.giro || "",
+    tipo_abono: opportunity.tipo_abono || "",
+    tipo_folios: opportunity.tipo_folios || "",
+    chip: opportunity.chip || "",
+
+    codigo_comercio: opportunity.codigo_comercio || "",
+    observaciones: opportunity.observaciones || "",
+
+    rut_rl: opportunity.rut_rl || "",   // ⭐ NUEVO
+  });
+};
+
+/* ============================
+   Guardar edición
+   ============================ */
+const handleEditSave = async () => {
+  if (!editingOpportunity) return;
+
+  const rutNormalizado = normalizarRut(form.rut);
+
+  if (form.rut && !validarRut(rutNormalizado)) {
+    alert("El RUT ingresado no es válido.");
+    return;
+  }
+
+  const updated = {
+    rut: rutNormalizado || null,
+    empresa: form.empresa,
+    producto: form.producto,
+    monto: Number(form.monto || 0),
+    vendedor: form.vendedor,
+    telefono: form.telefono,
+    telefono2: form.telefono2,
+    email: form.email,
+    tipo_ingreso: form.tipo_ingreso,
+    stage: Number(form.stage),
+
+    nombre: form.nombre,
+    apellido: form.apellido,
+    direccion: form.direccion,
+    comuna: form.comuna,
+    ciudad: form.ciudad,
+    razon_social: form.razon_social,
+    nombre_fantasia: form.nombre_fantasia,
+    direccion_comercial: form.direccion_comercial,
+    nombre_rl: form.nombre_rl,
+    email_rl: form.email_rl,
+    giro: form.giro,
+    tipo_abono: form.tipo_abono,
+    tipo_folios: form.tipo_folios,
+    chip: form.chip,
+
+    codigo_comercio: form.codigo_comercio,
+    observaciones: form.observaciones,
+
+    rut_rl: form.rut_rl,   // ⭐ NUEVO
   };
 
-  /* ============================
-     Guardar edición
-     ============================ */
-  const handleEditSave = async () => {
-    if (!editingOpportunity) return;
+  try {
+    const res = await api.put(
+      `/oportunidades/${editingOpportunity.id}`,
+      updated
+    );
 
-    const rutNormalizado = normalizarRut(form.rut);
+    setOpportunities((prev) =>
+      prev.map((o) => (o.id === editingOpportunity.id ? res.data : o))
+    );
 
-    if (form.rut && !validarRut(rutNormalizado)) {
-      alert("El RUT ingresado no es válido.");
-      return;
-    }
+    setEditingOpportunity(null);
+  } catch (err) {
+    console.error("Error actualizando oportunidad", err);
+    alert("Error al actualizar la oportunidad.");
+  }
+};
 
-    const updated = {
-      rut: rutNormalizado || null,
-      empresa: form.empresa,
-      producto: form.producto,
-      monto: Number(form.monto || 0),
-      vendedor: form.vendedor,
-      telefono: form.telefono,
-      telefono2: form.telefono2,
-      email: form.email,
-      tipo_ingreso: form.tipo_ingreso,
-      stage: Number(form.stage),
-
-      nombre: form.nombre,
-      apellido: form.apellido,
-      direccion: form.direccion,
-      comuna: form.comuna,
-      ciudad: form.ciudad,
-      razon_social: form.razon_social,
-      nombre_fantasia: form.nombre_fantasia,
-      direccion_comercial: form.direccion_comercial,
-      nombre_rl: form.nombre_rl,
-      email_rl: form.email_rl,
-      giro: form.giro,
-      tipo_abono: form.tipo_abono,
-      tipo_folios: form.tipo_folios,
-      chip: form.chip,
-
-      codigo_comercio: form.codigo_comercio,
-      observaciones: form.observaciones,
-    };
-
-    try {
-      const res = await api.put(
-        `/oportunidades/${editingOpportunity.id}`,
-        updated
-      );
-
-      setOpportunities((prev) =>
-        prev.map((o) => (o.id === editingOpportunity.id ? res.data : o))
-      );
-
-      setEditingOpportunity(null);
-    } catch (err) {
-      console.error("Error actualizando oportunidad", err);
-      alert("Error al actualizar la oportunidad.");
-    }
-  };
 
   /* ============================
      7. Drag & Drop
