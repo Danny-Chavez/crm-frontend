@@ -3,7 +3,7 @@ import { configuracionService } from "../services/configuracion.service";
 import Header from "../components/Header";
 
 // ⭐ IMPORT CORRECTO
-import UsuariosPasswordForm from "../pages/Usuarios/usuariosPasswordForm";
+import UsuariosPasswordForm from "../pages/Usuarios/UsuariosPasswordForm";
 
 import { Outlet, Link, useLocation } from "react-router-dom";
 
