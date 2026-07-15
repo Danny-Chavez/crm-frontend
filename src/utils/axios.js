@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://crm-backend-fprh.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL,
   withCredentials: false, // tu backend usa Authorization, no cookies
 });
 
@@ -18,7 +18,6 @@ api.interceptors.request.use((config) => {
     }
 
     // DEBUG: mostrar qué URL y headers se van a enviar
-    // Borra o comenta estos console.log en producción
     console.debug(
       "[API REQUEST]",
       config.method?.toUpperCase(),
@@ -48,5 +47,6 @@ api.interceptors.response.use(
 );
 
 export default api;
+
 
 

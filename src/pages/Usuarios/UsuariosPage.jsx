@@ -2,12 +2,12 @@ import { useEffect, useState, useContext } from "react";
 import { usuariosService } from "../../services/usuarios.service";
 import UsuariosTable from "./UsuariosTable";
 import UsuarioForm from "./UsuarioForm";
+import UsuariosPasswordForm from "./UsuariosPasswordForm";
 import { AuthContext } from "../../auth/AuthContext";
 
 export default function UsuariosPage() {
   const { user } = useContext(AuthContext);
 
-  // DEBUG seguro: solo después de declarar user
   console.debug("LIFECYCLE: UsuariosPage render", { user });
 
   const [usuarios, setUsuarios] = useState([]);
@@ -15,6 +15,10 @@ export default function UsuariosPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [usuarioEdit, setUsuarioEdit] = useState(null);
   const [error, setError] = useState(null);
+
+  // Nuevo: modal para cambiar contraseña
+  const [passwordModal, setPasswordModal] = useState(false);
+  const [usuarioPassword, setUsuarioPassword] = useState(null);
 
   const isAllowed = ["SuperAdmin", "Admin", "Supervisor"].includes(user?.rol);
 
@@ -33,7 +37,6 @@ export default function UsuariosPage() {
     }
   };
 
-  // Exponer función para pruebas manuales desde la consola
   window.testGetUsuarios = async () => {
     try {
       console.debug("WINDOW TEST: llamando usuariosService.getAll()");
@@ -44,19 +47,13 @@ export default function UsuariosPage() {
     }
   };
 
-  // Ejecutar solo cuando user esté disponible y tenga rol permitido
   useEffect(() => {
-    if (!user) {
-      // aún no hay usuario en contexto; esperar
-      return;
-    }
+    if (!user) return;
     if (!isAllowed) {
-      // usuario no autorizado; no intentar cargar
       setLoading(false);
       return;
     }
     cargarUsuarios();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const abrirCrear = () => {
@@ -67,6 +64,11 @@ export default function UsuariosPage() {
   const abrirEditar = (usuario) => {
     setUsuarioEdit(usuario);
     setModalOpen(true);
+  };
+
+  const abrirPassword = (usuario) => {
+    setUsuarioPassword(usuario);
+    setPasswordModal(true);
   };
 
   const eliminarUsuario = async (id) => {
@@ -80,12 +82,10 @@ export default function UsuariosPage() {
     }
   };
 
-  // Mostrar estado mientras se resuelve user
   if (!user) {
     return <div className="text-text-secondary">Cargando sesión...</div>;
   }
 
-  // Protección por rol (cuando user ya está definido)
   if (!isAllowed) {
     return (
       <div className="p-6 text-red-600 font-semibold">
@@ -96,6 +96,7 @@ export default function UsuariosPage() {
 
   return (
     <div className="flex flex-col gap-6 font-sans">
+      
       {/* ENCABEZADO CORPORATIVO */}
       <div className="flex justify-between items-center">
         <div>
@@ -105,7 +106,6 @@ export default function UsuariosPage() {
           </p>
         </div>
 
-        {/* Solo SuperAdmin puede crear usuarios */}
         {user.rol === "SuperAdmin" && (
           <button
             onClick={abrirCrear}
@@ -131,11 +131,12 @@ export default function UsuariosPage() {
           usuarios={usuarios}
           onEdit={abrirEditar}
           onDelete={eliminarUsuario}
+          onPassword={abrirPassword}
           puedeEditar={user.rol === "SuperAdmin"}
         />
       )}
 
-      {/* MODAL */}
+      {/* MODAL CREAR/EDITAR */}
       {modalOpen && (
         <UsuarioForm
           usuario={usuarioEdit}
@@ -143,9 +144,19 @@ export default function UsuariosPage() {
           onSaved={cargarUsuarios}
         />
       )}
+
+      {/* MODAL CAMBIAR CONTRASEÑA */}
+      {passwordModal && (
+        <UsuariosPasswordForm
+          usuario={usuarioPassword}
+          onClose={() => setPasswordModal(false)}
+          onSaved={cargarUsuarios}
+        />
+      )}
     </div>
   );
 }
+
 
 
 

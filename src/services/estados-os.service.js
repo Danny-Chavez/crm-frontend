@@ -19,7 +19,8 @@ export const estadosOSService = {
       activo: data.activo ?? true
     }),
 
-  remove: (id) => api.delete(`/estados-os/${id}`),
+  // ⭐ CORRECCIÓN: antes era "remove"
+  delete: (id) => api.delete(`/estados-os/${id}`)
 };
 
 

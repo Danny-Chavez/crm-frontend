@@ -1,4 +1,4 @@
-export default function UsuariosTable({ usuarios, onEdit, onDelete, puedeEditar }) {
+export default function UsuariosTable({ usuarios, onEdit, onDelete, onPassword, puedeEditar }) {
   return (
     <div className="bg-surface rounded-xl shadow-md overflow-hidden font-sans">
       <table className="w-full text-sm text-text-main">
@@ -49,6 +49,16 @@ export default function UsuariosTable({ usuarios, onEdit, onDelete, puedeEditar 
                   </button>
                 )}
 
+                {/* Solo SuperAdmin puede cambiar contraseña */}
+                {puedeEditar && (
+                  <button
+                    onClick={() => onPassword(u)}
+                    className="px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-semibold transition"
+                  >
+                    Cambiar contraseña
+                  </button>
+                )}
+
                 {/* Solo SuperAdmin puede desactivar */}
                 {puedeEditar && (
                   <button
@@ -67,5 +77,6 @@ export default function UsuariosTable({ usuarios, onEdit, onDelete, puedeEditar 
     </div>
   );
 }
+
 
 

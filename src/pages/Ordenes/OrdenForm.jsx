@@ -23,38 +23,15 @@ const categoriasHardcode = [
 
 /* ------------------ FALLAS HARDCODEADAS ------------------ */
 const fallasHardcode = [
-  "USB Device",
-  "No Imprime",
-  "No Carga",
-  "Batería",
-  "Morosidad",
-  "CD con Problema",
-  "Tamper",
-  "Lentitud",
-  "Sobre Consumo",
-  "Actualización de Información",
-  "Gestión DTE",
-  "Error en Reportes",
-  "Diferencia en Ventas",
-  "Clave Acceso",
-  "Daño Físico",
-  "Se Apaga",
-  "No Enciende",
-  "Soporte Documentos",
-  "Conexión",
-  "Soporte Inventario",
-  "Cotización Papel",
-  "Salto de Folios",
-  "Pantalla defectuosa",
-  "APP Bloqueada",
-  "Sin Folios",
-  "Falla Teclado",
-  "Cambio razón social",
-  "Masivo por Movistar",
-  "Masivo por Claro",
-  "Folios Exentos",
-  "No corresponde Soporte",
-  "Obsoleto"
+  "USB Device", "No Imprime", "No Carga", "Batería", "Morosidad",
+  "CD con Problema", "Tamper", "Lentitud", "Sobre Consumo",
+  "Actualización de Información", "Gestión DTE", "Error en Reportes",
+  "Diferencia en Ventas", "Clave Acceso", "Daño Físico", "Se Apaga",
+  "No Enciende", "Soporte Documentos", "Conexión", "Soporte Inventario",
+  "Cotización Papel", "Salto de Folios", "Pantalla defectuosa",
+  "APP Bloqueada", "Sin Folios", "Falla Teclado", "Cambio razón social",
+  "Masivo por Movistar", "Masivo por Claro", "Folios Exentos",
+  "No corresponde Soporte", "Obsoleto", "Impresión tenue"
 ];
 
 export default function OrdenForm({
@@ -68,47 +45,12 @@ export default function OrdenForm({
 
   const clean = (v) => (v === undefined || v === "" ? null : v);
 
-  /* ⭐ DETECTAR SI LA OS VIENE CLONADA */
-  const esClonada =
-    orden &&
-    orden.id &&
-    orden.tipo === null &&
-    orden.descripcion === null &&
-    orden.estado === "pendiente";
+  const usuarioActual = user?.nombre || user?.email || "Sistema";
 
-  /* ⭐ INICIALIZACIÓN DEL FORMULARIO */
+  /* ⭐ FORMULARIO */
   const [form, setForm] = useState(() => {
-    if (orden) {
-      return {
-        cliente_rut: orden.cliente_rut || "",
-        comercio_id: orden.comercio_id || "",
-        estado: esClonada ? "pendiente" : orden.estado || "",
-        estado_id: "",
-        descripcion: esClonada ? "" : orden.descripcion || "",
-        tecnico_id: esClonada ? "" : orden.tecnico_id || "",
-        prioridad: esClonada ? "" : orden.prioridad || "",
-        sla_respuesta: esClonada ? "" : orden.sla_respuesta || "",
-        sla_resolucion: esClonada ? "" : orden.sla_resolucion || "",
-        categoria: esClonada ? "" : orden.categoria || "",
-        origen: esClonada ? "" : orden.origen || "",
-        costo: esClonada ? "" : orden.costo || "",
-        notas_internas: esClonada ? "" : orden.notas_internas || "",
-        resultado: esClonada ? "" : orden.resultado || "",
+    if (orden) return { ...orden };
 
-        /* ⭐ CAMPOS CLONADOS */
-        fono_contacto: orden.fono_contacto || "",
-        falla: orden.falla || "",
-        num_serie: orden.num_serie || "",
-        nom_retira: orden.nom_retira || "",
-        dir_despacho: orden.dir_despacho || "",
-        com_despacho: orden.com_despacho || "",
-        num_serie_cambio: orden.num_serie_cambio || "",
-        os_in: orden.os_in || "",
-        os_out: orden.os_out || ""
-      };
-    }
-
-    // OS nueva
     return {
       cliente_rut: cliente_rut || "",
       comercio_id: "",
@@ -132,7 +74,13 @@ export default function OrdenForm({
       com_despacho: "",
       num_serie_cambio: "",
       os_in: "",
-      os_out: ""
+      os_out: "",
+
+      /* ⭐ NUEVOS CAMPOS OS */
+      chip: "",
+      modelo_dispositivo: "",
+      nombre_fantasia: "",
+      seguimiento_correo: ""
     };
   });
 
@@ -140,34 +88,23 @@ export default function OrdenForm({
   const [tecnicos, setTecnicos] = useState([]);
   const [files, setFiles] = useState([]);
 
-  const usuarioActual = user?.nombre || user?.email || "Sistema";
+  /* ⭐ CARGAR OS COMPLETA */
+  useEffect(() => {
+    if (orden) setForm({ ...orden });
+  }, [orden]);
 
   /* ⭐ CARGAR ESTADOS Y TÉCNICOS */
   useEffect(() => {
     const cargarEstados = async () => {
       const res = await estadosOSService.getAll();
       setEstados(res.data);
-
-      const estadoPendiente = res.data.find(
-        (e) => e.nombre.toLowerCase().includes("pend")
-      );
-
-      if (orden) {
-        setForm((prev) => ({
-          ...prev,
-          estado_id: estadoPendiente?.id || prev.estado_id
-        }));
-      }
     };
 
     const cargarTecnicos = async () => {
       const res = await tecnicosService.getAll();
 
       const tecnicosNormalizados = res.data.filter(t =>
-        t.rol
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") === "tecnico"
+        t.rol.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === "tecnico"
       );
 
       setTecnicos(tecnicosNormalizados);
@@ -175,7 +112,7 @@ export default function OrdenForm({
 
     cargarEstados();
     cargarTecnicos();
-  }, [orden]);
+  }, []);
 
   /* ⭐ SLA AUTOMÁTICO */
   const calcularSLA = (prioridad) => {
@@ -252,27 +189,24 @@ export default function OrdenForm({
       return;
     }
 
-    /* ⭐ PAYLOAD CORREGIDO PARA CLONACIÓN */
     const payload = {
       cliente_rut: clean(rutNormalizado),
       comercio_id: clean(form.comercio_id),
       dispositivo_id: clean(terminal_id),
       estado: clean(form.estado),
 
-      /* ⭐ CAMPOS QUE NO SE CLONAN */
-      descripcion: esClonada ? null : clean(form.descripcion),
-      tecnico_id: esClonada ? null : clean(form.tecnico_id),
-      prioridad: esClonada ? null : clean(form.prioridad),
-      sla: esClonada ? null : clean(form.sla_resolucion),
-      categoria: esClonada ? null : clean(form.categoria),
-      resultado: esClonada ? null : clean(form.resultado),
-      origen: esClonada ? null : clean(form.origen),
-      costo: esClonada ? null : clean(form.costo),
-      notas_internas: esClonada ? null : clean(form.notas_internas),
+      descripcion: clean(form.descripcion),
+      tecnico_id: clean(form.tecnico_id),
+      prioridad: clean(form.prioridad),
+      sla: clean(form.sla_resolucion),
+      categoria: clean(form.categoria),
+      resultado: clean(form.resultado),
+      origen: clean(form.origen),
+      costo: clean(form.costo),
+      notas_internas: clean(form.notas_internas),
 
       actualizado_por: usuarioActual,
 
-      /* ⭐ CAMPOS CLONADOS */
       fono_contacto: clean(form.fono_contacto),
       falla: clean(form.falla),
       num_serie: clean(form.num_serie),
@@ -281,13 +215,19 @@ export default function OrdenForm({
       com_despacho: clean(form.com_despacho),
       num_serie_cambio: clean(form.num_serie_cambio),
       os_in: clean(form.os_in),
-      os_out: clean(form.os_out)
+      os_out: clean(form.os_out),
+
+      /* ⭐ NUEVOS CAMPOS OS */
+      chip: clean(form.chip),
+      modelo_dispositivo: clean(form.modelo_dispositivo),
+      nombre_fantasia: clean(form.nombre_fantasia),
+      seguimiento_correo: clean(form.seguimiento_correo)
     };
 
     let osId = null;
 
     /* ⭐ SI ES EDICIÓN */
-    if (orden && !esClonada) {
+    if (orden) {
       osId = orden.id;
 
       if (orden.estado !== form.estado) {
@@ -306,7 +246,7 @@ export default function OrdenForm({
       await registrarCambio(osId, "actualizacion", "Orden actualizada");
 
     } else {
-      /* ⭐ SI ES NUEVA O CLONADA */
+      /* ⭐ SI ES NUEVA */
       const res = await ordenesService.create({
         ...payload,
         creado_por: usuarioActual,
@@ -315,7 +255,7 @@ export default function OrdenForm({
 
       osId = res.id;
 
-      await registrarCambio(osId, "creacion", esClonada ? "Orden clonada" : "Orden creada");
+      await registrarCambio(osId, "creacion", "Orden creada");
       await registrarCambio(osId, "cliente", `Cliente asociado: ${payload.cliente_rut}`);
 
       if (form.estado) {
@@ -343,9 +283,8 @@ export default function OrdenForm({
         onSubmit={handleSubmit}
       >
         <h2 className="text-xl font-bold text-primary">
-          {esClonada ? "Clonar OS" : orden ? "Editar OS" : "Crear OS"}
+          {orden ? "Editar OS" : "Crear OS"}
         </h2>
-        
 
         {/* Cliente RUT */}
         <div className="flex flex-col gap-1">
@@ -389,7 +328,7 @@ export default function OrdenForm({
           <select
             name="falla"
             className="border border-border p-3 rounded-lg text-sm"
-            value={form.falla}
+            value={form.falla || ""}
             onChange={handleChange}
           >
             <option value="">Seleccione falla</option>
@@ -483,7 +422,67 @@ export default function OrdenForm({
           />
         </div>
 
-        {/* Estado OS */}
+        {/* ⭐ CHIP */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-text-main">Chip</label>
+          <input
+            name="chip"
+            className="border border-border p-3 rounded-lg text-sm"
+            value={form.chip || ""}
+            onChange={handleChange}
+            placeholder="Ej: 893720XXXXXXXXXXX"
+          />
+        </div>
+
+        {/* ⭐ MODELO DISPOSITIVO */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-text-main">Modelo dispositivo</label>
+          <select
+            name="modelo_dispositivo"
+            className="border border-border p-3 rounded-lg text-sm"
+            value={form.modelo_dispositivo || ""}
+            onChange={handleChange}
+          >
+            <option value="">Seleccione modelo</option>
+
+            {/* ⭐ HARDCOLEADOS */}
+            <option value="Verifone C680">Verifone C680</option>
+            <option value="Verifone T650p">Verifone T650p</option>
+            <option value="Telpo TPS390">Telpo TPS390</option>
+            <option value="Sunmi P3">Sunmi P3</option>
+            <option value="PAX S80">PAX S80</option>
+            <option value="Android Generico">Android Generico</option>
+            <option value="PDV">PDV</option>
+
+          </select>
+        </div>
+
+        {/* ⭐ NOMBRE DE FANTASÍA */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-text-main">Nombre de fantasía</label>
+          <input
+            name="nombre_fantasia"
+            className="border border-border p-3 rounded-lg text-sm"
+            value={form.nombre_fantasia || ""}
+            onChange={handleChange}
+            placeholder="Ej: Minimarket Don Pepe"
+          />
+        </div>
+
+        {/* ⭐ SEGUIMIENTO CORREO */}
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-text-main">Seguimiento correo</label>
+          <textarea
+            name="seguimiento_correo"
+            className="border border-border p-3 rounded-lg text-sm"
+            value={form.seguimiento_correo || ""}
+            onChange={handleChange}
+            placeholder="Notas de seguimiento por correo..."
+            rows={3}
+          />
+        </div>
+
+                {/* Estado OS */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-text-main">Estado</label>
           <select
@@ -686,4 +685,3 @@ export default function OrdenForm({
     </div>
   );
 }
-

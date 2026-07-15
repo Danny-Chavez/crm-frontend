@@ -1,4 +1,4 @@
-export default function EstadosOSTable({ estados, onEdit }) {
+export default function EstadosOSTable({ estados, onEdit, onDelete }) {
   return (
     <div className="bg-surface rounded-xl shadow-md overflow-hidden font-sans">
       <table className="w-full text-sm text-text-main">
@@ -24,13 +24,24 @@ export default function EstadosOSTable({ estados, onEdit }) {
               <td className="p-4">{e.nombre}</td>
               <td className="p-4">{e.descripcion}</td>
 
-              <td className="p-4 text-right">
+              <td className="p-4 text-right flex gap-2 justify-end">
+
+                {/* EDITAR */}
                 <button
                   onClick={() => onEdit(e)}
                   className="px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-semibold transition"
                 >
                   Editar
                 </button>
+
+                {/* ELIMINAR */}
+                <button
+                  onClick={() => onDelete(e)}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition"
+                >
+                  Eliminar
+                </button>
+
               </td>
             </tr>
           ))}
@@ -40,3 +51,4 @@ export default function EstadosOSTable({ estados, onEdit }) {
     </div>
   );
 }
+

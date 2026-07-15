@@ -30,6 +30,23 @@ export default function EstadosOSPage() {
     setModalOpen(true);
   };
 
+  /* ⭐ ELIMINAR ESTADO */
+  const eliminarEstado = async (estado) => {
+    const confirmar = window.confirm(
+      `¿Eliminar el estado "${estado.nombre}"?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      await estadosOSService.delete(estado.id);
+      await cargarEstados();
+    } catch (err) {
+      console.error("❌ Error eliminando estado:", err);
+      alert("No se pudo eliminar el estado.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 font-sans">
 
@@ -56,7 +73,11 @@ export default function EstadosOSPage() {
       {loading ? (
         <div className="text-text-secondary">Cargando...</div>
       ) : (
-        <EstadosOSTable estados={estados} onEdit={abrirEditar} />
+        <EstadosOSTable
+          estados={estados}
+          onEdit={abrirEditar}
+          onDelete={eliminarEstado}
+        />
       )}
 
       {/* MODAL */}
@@ -70,3 +91,4 @@ export default function EstadosOSPage() {
     </div>
   );
 }
+

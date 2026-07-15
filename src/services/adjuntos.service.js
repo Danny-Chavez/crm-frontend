@@ -1,12 +1,12 @@
 import api from "../utils/axios";
 
 export const adjuntosService = {
-  // SUBIR ARCHIVO
+  // SUBIR ARCHIVO A UNA ORDEN
   upload: (ordenId, file) => {
     const formData = new FormData();
-    formData.append("archivo", file); // ⭐ nombre correcto para multer
+    formData.append("archivo", file); // nombre correcto para multer
 
-    return api.post(`/adjuntos/${ordenId}`, formData, {
+    return api.post(`/adjuntos/orden/${ordenId}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
@@ -14,9 +14,10 @@ export const adjuntosService = {
   // OBTENER ADJUNTOS DE UNA OS
   getByOrden: (ordenId) => api.get(`/adjuntos/orden/${ordenId}`),
 
-  // ELIMINAR ADJUNTO
+  // ELIMINAR ADJUNTO POR ID
   delete: (id) => api.delete(`/adjuntos/${id}`)
 };
+
 
 
 

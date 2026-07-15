@@ -67,14 +67,15 @@ function StageItem({ stage, onEdit, onDelete }) {
         )}
       </div>
 
-      {/* Botones */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* Botones estilo OS */}
+      <div className="flex items-center gap-2 shrink-0">
+
         <button
           onClick={(e) => {
             e.stopPropagation();
             onEdit(stage);
           }}
-          className="text-blue-600 text-sm hover:underline"
+          className="px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-semibold transition"
         >
           Editar
         </button>
@@ -84,15 +85,14 @@ function StageItem({ stage, onEdit, onDelete }) {
             e.stopPropagation();
             onDelete(stage.id);
           }}
-          className="text-red-600 text-sm hover:underline"
+          className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition"
         >
           Eliminar
         </button>
+
       </div>
     </div>
   );
-
-
 }
 
 // Zona droppable
@@ -177,6 +177,9 @@ export default function PipelineConfig() {
      6. Eliminar etapa
      ============================ */
   const handleDeleteStage = async (id) => {
+    const confirmar = window.confirm("¿Eliminar esta etapa del pipeline?");
+    if (!confirmar) return;
+
     await api.delete(`/pipeline-stages/${id}`);
     setStages(stages.filter((s) => s.id !== id));
   };
@@ -349,8 +352,6 @@ export default function PipelineConfig() {
                 />
               </StageDropZone>
 
-
-
             </div>
           ))}
         </div>
@@ -454,6 +455,7 @@ export default function PipelineConfig() {
     </div>
   );
 }
+
 
 
 

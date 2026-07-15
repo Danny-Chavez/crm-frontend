@@ -23,6 +23,9 @@ import OrdenDetalles from "./pages/Ordenes/OrdenDetalles";
 // ⭐ CONFIGURACIÓN DEL PIPELINE
 import PipelineConfig from "./pages/Config/PipelineConfig";
 
+// ⭐ MI PERFIL
+import MiPerfilPage from "./pages/Usuarios/MiPerfilPage";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -75,12 +78,16 @@ export default function App() {
           <Route path="/terminales/:id/detalles" element={<TerminalDetalles />} />
           <Route path="/ordenes/:id" element={<OrdenDetalles />} />
 
+          {/* ⭐ MI PERFIL (CORRECTO) */}
+          <Route path="/mi-perfil" element={<MiPerfilPage />} />
+
         </Route>
 
       </Routes>
     </BrowserRouter>
   );
 }
+
 
 
 

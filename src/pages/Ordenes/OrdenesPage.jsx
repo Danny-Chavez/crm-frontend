@@ -39,6 +39,18 @@ export default function OrdenesPage() {
     setShowDetails(true);
   };
 
+  const handleDelete = async (id) => {
+    if (!confirm("¿Eliminar OS definitivamente?")) return;
+
+    try {
+      await ordenesService.remove(id);
+      setOrdenes(ordenes.filter((o) => o.id !== id));
+    } catch (err) {
+      console.error("Error eliminando OS:", err);
+      alert("No se pudo eliminar la OS");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 font-sans">
 
@@ -67,6 +79,7 @@ export default function OrdenesPage() {
           ordenes={ordenes}
           onEdit={abrirEditar}
           onView={abrirDetalles}
+          onDelete={handleDelete}
         />
       )}
 

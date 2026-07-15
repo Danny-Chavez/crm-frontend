@@ -10,9 +10,18 @@ import {
 
 import { ordenesService } from "../../services/ordenes.service";
 
-export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
+// ⭐ IMPORTANTE: definir user para evitar ReferenceError
+const getUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user")) || null;
+  } catch {
+    return null;
+  }
+};
 
-    console.log("ORDENES RECIBIDAS:", ordenes);  // ⭐ AGREGA ESTO
+export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
+  const user = getUser();
+
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [filtroCategoria, setFiltroCategoria] = useState("todos");
   const [filtroComercio, setFiltroComercio] = useState("");
@@ -20,11 +29,21 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
 
-  // ⭐ FUNCIÓN CLONAR OS
+  /* ⭐ LIMPIAR OS ANTES DE ENVIARLA AL FORMULARIO */
+  const limpiarOS = (o) => ({
+    ...o,
+    tecnico_id: o.tecnico_id || "",
+    prioridad: o.prioridad || "",
+    categoria: o.categoria || "",
+    origen: o.origen || "",
+    descripcion: o.descripcion || "",
+  });
+
+  /* ⭐ FUNCIÓN CLONAR OS */
   const handleClone = async (id) => {
     try {
       const nueva = await ordenesService.clonar(id);
-      onEdit(nueva);
+      onEdit(limpiarOS(nueva));
     } catch (err) {
       console.error("❌ Error clonando OS:", err);
       alert("Error al clonar OS");
@@ -37,6 +56,14 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .trim();
+
+  /* ⭐ SANEAR CAMPOS QUE PUEDAN CONTENER /uploads */
+  const sanearCampo = (v) => {
+    if (!v) return "";
+    if (typeof v !== "string") return v;
+    if (v.includes("/uploads/")) return "(archivo antiguo eliminado)";
+    return v;
+  };
 
   const badgeEstado = (estado) => {
     const e = normalizar(estado);
@@ -97,14 +124,14 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     ];
 
     const filas = filtradas.map((o) => [
-      o.cliente_rut || "",
-      o.estado || "",
-      o.fecha_creacion || "",
-      o.descripcion || "",
-      o.tecnico || "",
-      o.prioridad || "",
-      o.categoria || "",
-      o.comercio_id || "",
+      sanearCampo(o.cliente_rut),
+      sanearCampo(o.estado),
+      sanearCampo(o.fecha_creacion),
+      sanearCampo(o.descripcion),
+      sanearCampo(o.tecnico),
+      sanearCampo(o.prioridad),
+      sanearCampo(o.categoria),
+      sanearCampo(o.comercio_id),
     ]);
 
     const csvContent =
@@ -203,8 +230,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
           onClick={exportarExcel}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition"
         >
-          <ArrowDownTrayIcon className="w-5 h-5" />
-          Exportar Excel
+          <ArrowDownTrayIcon className="w-5 h-5" /> Exportar Excel
         </button>
       </div>
 
@@ -216,11 +242,8 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
             <th className="p-4 font-semibold text-left">Cliente (RUT)</th>
             <th className="p-4 font-semibold text-left">Estado</th>
             <th className="p-4 font-semibold text-left">Fecha creación</th>
-
-            {/* ⭐ NUEVO */}
             <th className="p-4 font-semibold text-left">Técnico</th>
             <th className="p-4 font-semibold text-left">Categoría</th>
-
             <th className="p-4 font-semibold text-right">Acciones</th>
           </tr>
         </thead>
@@ -243,7 +266,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                 )}
               </td>
 
-              <td className="p-4">{o.cliente_rut}</td>
+              <td className="p-4">{sanearCampo(o.cliente_rut)}</td>
 
               <td className="p-4">
                 <span
@@ -251,7 +274,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     o.estado
                   )}`}
                 >
-                  {o.estado}
+                  {sanearCampo(o.estado)}
                 </span>
               </td>
 
@@ -261,15 +284,9 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                   : ""}
               </td>
 
-              {/* ⭐ TÉCNICO */}
-              <td className="p-4">
-                {o.tecnico || "Sin técnico"}
-              </td>
+              <td className="p-4">{sanearCampo(o.tecnico) || "Sin técnico"}</td>
 
-              {/* ⭐ CATEGORÍA */}
-              <td className="p-4">
-                {o.categoria || "Sin categoría"}
-              </td>
+              <td className="p-4">{sanearCampo(o.categoria) || "Sin categoría"}</td>
 
               <td className="p-4">
                 <div className="flex justify-end gap-2">
@@ -280,21 +297,25 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     <EyeIcon className="w-4 h-4" /> Ver
                   </button>
 
-                  <button
-                    onClick={() => onEdit(o)}
-                    className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                  >
-                    <PencilSquareIcon className="w-4 h-4" /> Editar
-                  </button>
+                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
+                    <button
+                      onClick={() => onEdit(limpiarOS(o))}
+                      className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" /> Editar
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => handleClone(o.id)}
-                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
-                  >
-                    <PencilSquareIcon className="w-4 h-4" /> Clonar
-                  </button>
+                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
+                    <button
+                      onClick={() => handleClone(o.id)}
+                      className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
+                    >
+                      <PencilSquareIcon className="w-4 h-4" /> Clonar
+                    </button>
+                  )}
 
-                  {onDelete && (
+                  {user?.rol === "SuperAdmin" && onDelete && (
                     <button
                       onClick={() => onDelete(o.id)}
                       className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
@@ -334,6 +355,8 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     </div>
   );
 }
+
+
 
 
 

@@ -794,7 +794,7 @@ const handleEditSave = async () => {
 
               {/* Empresa */}
               <div>
-                <label className="text-sm text-gray-600">Empresa</label>
+                <label className="text-sm text-gray-600">Nombre Oportunidad</label>
                 <input
                   type="text"
                   name="empresa"
@@ -1180,7 +1180,7 @@ const handleEditSave = async () => {
 
               {/* Empresa */}
               <div>
-                <label className="text-sm text-gray-600">Empresa</label>
+                <label className="text-sm text-gray-600">Nombre Oportunidad</label>
                 <input
                   type="text"
                   name="empresa"

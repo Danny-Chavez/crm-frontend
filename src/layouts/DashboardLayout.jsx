@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { configuracionService } from "../services/configuracion.service";
 import Header from "../components/Header";
+
+// ⭐ IMPORT CORRECTO
+import UsuariosPasswordForm from "../pages/Usuarios/usuariosPasswordForm";
+
 import { Outlet, Link, useLocation } from "react-router-dom";
 
 import {
@@ -20,10 +24,30 @@ export default function DashboardLayout() {
   const [crmOpen, setCrmOpen] = useState(true);
   const { pathname } = useLocation();
 
-  // Cargar logo desde la BD
+  // ⭐ Obtener usuario desde localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // ⭐ Normalizar rol
+  const rol = user?.rol
+    ?.toLowerCase()
+    ?.normalize("NFD")
+    ?.replace(/[\u0300-\u036f]/g, "");
+
+  // ⭐ Modal para cambiar mi contraseña
+  const [passwordModal, setPasswordModal] = useState(false);
+
+  // ⭐ Cargar logo desde la BD con saneamiento
   useEffect(() => {
     configuracionService.getLogo().then((res) => {
-      setLogo(res.data.logo);
+      const logoBD = res.data.logo;
+
+      // ⭐ SANEAR LOGO ANTIGUO PARA EVITAR ENOENT
+      if (logoBD && typeof logoBD === "string" && logoBD.includes("/uploads/")) {
+        console.warn("⚠ Logo antiguo detectado, se ignora para evitar ENOENT:", logoBD);
+        setLogo(null);
+      } else {
+        setLogo(logoBD || null);
+      }
     });
   }, []);
 
@@ -38,15 +62,22 @@ export default function DashboardLayout() {
   // ⭐ MENÚ CRM TAS CHILE
   const crmMenu = [
     { label: "Clientes", to: "/clientes", icon: UsersIcon },
-    //{ label: "Comercios", to: "/comercios", icon: ClipboardDocumentListIcon },
-    //{ label: "Terminales", to: "/terminales", icon: Cog6ToothIcon },
   ];
 
   // ⭐ CONFIGURACIÓN
   const configMenu = [
-    { label: "Logo", to: "/config/logo", icon: Cog6ToothIcon },
-    { label: "Estados OS", to: "/estados-os", icon: WrenchScrewdriverIcon },
-    { label: "Pipeline (config)", to: "/config/pipeline", icon: Cog6ToothIcon },
+    ...( ["superadmin", "admin"].includes(rol)
+      ? [{ label: "Logo", to: "/config/logo", icon: Cog6ToothIcon }]
+      : []
+    ),
+    ...( ["superadmin", "admin", "supervisor"].includes(rol)
+      ? [{ label: "Estados OS", to: "/estados-os", icon: WrenchScrewdriverIcon }]
+      : []
+    ),
+    ...( ["superadmin", "admin", "supervisor"].includes(rol)
+      ? [{ label: "Pipeline (config)", to: "/config/pipeline", icon: Cog6ToothIcon }]
+      : []
+    ),
   ];
 
   return (
@@ -117,7 +148,7 @@ export default function DashboardLayout() {
             })}
           </div>
 
-          {/* ⭐ CRM TAS CHILE (colapsable) */}
+          {/* ⭐ CRM TAS CHILE */}
           <div>
             <button
               onClick={() => setCrmOpen(!crmOpen)}
@@ -153,29 +184,31 @@ export default function DashboardLayout() {
           </div>
 
           {/* ⭐ CONFIGURACIÓN */}
-          <div>
-            {!collapsed && (
-              <p className="text-xs uppercase text-gray-300 mb-2 px-1">Configuración</p>
-            )}
+          {["superadmin", "admin", "supervisor"].includes(rol) && (
+            <div>
+              {!collapsed && (
+                <p className="text-xs uppercase text-gray-300 mb-2 px-1">Configuración</p>
+              )}
 
-            {configMenu.map((item) => {
-              const active = pathname === item.to;
-              const Icon = item.icon;
+              {configMenu.map((item) => {
+                const active = pathname === item.to;
+                const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
-                    ${active ? "bg-primary text-white" : "hover:bg-primary/40"}
-                  `}
-                >
-                  <Icon className="h-6 w-6" />
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              );
-            })}
-          </div>
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+                      ${active ? "bg-primary text-white" : "hover:bg-primary/40"}
+                    `}
+                  >
+                    <Icon className="h-6 w-6" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
         </nav>
 
@@ -187,12 +220,29 @@ export default function DashboardLayout() {
 
       {/* CONTENIDO */}
       <main className="flex-1 p-8 overflow-x-hidden relative">
-        <Header />
-        <Outlet />
+        <Header onOpenPasswordModal={() => setPasswordModal(true)} />
+
+        {/* ⭐ Pasamos la función al Outlet */}
+        <Outlet context={{ onOpenPasswordModal: () => setPasswordModal(true) }} />
+
+        {passwordModal && (
+          <UsuariosPasswordForm
+            usuario={{ id: user.id, nombre: user.nombre }}
+            onClose={() => setPasswordModal(false)}
+            onSaved={() => {
+              alert("Contraseña actualizada correctamente");
+              setPasswordModal(false);
+            }}
+          />
+        )}
       </main>
     </div>
   );
 }
+
+
+
+
 
 
 

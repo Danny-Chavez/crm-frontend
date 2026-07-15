@@ -1,19 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useAuth from "../auth/useAuth";
 import { configuracionService } from "../services/configuracion.service";
+import { Link } from "react-router-dom";
 
-export default function Header() {
+export default function Header({ onOpenPasswordModal }) {
   const { user, logout } = useAuth();
   const [logo, setLogo] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Cargar logo corporativo desde la BD
+  const menuRef = useRef(null);
+
   useEffect(() => {
     configuracionService.getLogo().then((res) => {
       setLogo(res.data.logo);
     });
   }, []);
 
-  // Detectar nombre real del usuario
+  // ⭐ Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const displayName =
     user?.name ||
     user?.nombre ||
@@ -21,7 +35,6 @@ export default function Header() {
     user?.email ||
     "Usuario";
 
-  // Inicial dinámica
   const initial = displayName.trim().charAt(0).toUpperCase();
 
   return (
@@ -41,20 +54,41 @@ export default function Header() {
         </h1>
       </div>
 
-      {/* Avatar */}
-      <div className="flex items-center gap-4">
-        <div className="relative group">
-          <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold">
-            {initial}
-          </div>
+      {/* Avatar + menú */}
+      <div className="relative" ref={menuRef}>
+        <div
+          className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer font-semibold"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {initial}
+        </div>
 
-          {/* Menú */}
+        {menuOpen && (
           <div className="absolute right-0 mt-2 w-44 bg-white shadow-lg rounded-xl p-2 
-                          opacity-0 group-hover:opacity-100 transition pointer-events-none 
-                          group-hover:pointer-events-auto border border-gray-100">
+                          border border-gray-100 z-50">
+
             <p className="px-3 py-2 text-gray-700 font-medium border-b">
               {displayName}
             </p>
+
+            {/* ⭐ NUEVO: enlace Mi Perfil */}
+            <Link
+              to="/mi-perfil"
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded text-gray-700 block"
+              onClick={() => setMenuOpen(false)}
+            >
+              Mi Perfil
+            </Link>
+
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                onOpenPasswordModal();
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded text-blue-600"
+            >
+              Cambiar mi contraseña
+            </button>
 
             <button
               onClick={logout}
@@ -63,11 +97,15 @@ export default function Header() {
               Cerrar sesión
             </button>
           </div>
-        </div>
+        )}
       </div>
+
     </header>
   );
 }
+
+
+
 
 
 

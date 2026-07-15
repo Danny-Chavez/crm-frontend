@@ -5,11 +5,19 @@ export default function LogoPage() {
   const [logo, setLogo] = useState(null);
   const [archivo, setArchivo] = useState(null);
 
-  // Cargar logo desde la BD
+  // Cargar logo desde la BD con saneamiento
   const cargarLogo = async () => {
     try {
       const res = await configuracionService.getLogo();
-      setLogo(res.data.logo);
+      const logoBD = res.data.logo;
+
+      // ⭐ SANEAR LOGO ANTIGUO PARA EVITAR ENOENT
+      if (logoBD && typeof logoBD === "string" && logoBD.includes("/uploads/")) {
+        console.warn("⚠ Logo antiguo detectado, se ignora para evitar ENOENT:", logoBD);
+        setLogo(null);
+      } else {
+        setLogo(logoBD || null);
+      }
     } catch (error) {
       console.error("Error cargando logo:", error);
     }
@@ -28,7 +36,10 @@ export default function LogoPage() {
     reader.onloadend = async () => {
       try {
         const base64 = reader.result;
+
+        // ⭐ Guardar logo en la BD
         await configuracionService.updateLogo(base64);
+
         setArchivo(null);
         cargarLogo();
       } catch (error) {
@@ -73,4 +84,5 @@ export default function LogoPage() {
     </div>
   );
 }
+
 

@@ -5,7 +5,7 @@ import { configuracionService } from "../services/configuracion.service";
 import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
-  const { setUser } = useAuth();   // ⭐ Necesitamos guardar usuario
+  const { setUser } = useAuth();   // ⭐ Necesitamos guardar usuario en contexto
   const navigate = useNavigate();
 
   const [logo, setLogo] = useState(null);
@@ -43,6 +43,9 @@ export default function LoginPage() {
 
       // ⭐ GUARDAR TOKEN CORRECTO
       localStorage.setItem("token", res.data.token);
+
+      // ⭐ GUARDAR USUARIO EN LOCALSTORAGE (CRÍTICO)
+      localStorage.setItem("user", JSON.stringify(res.data.usuario));
 
       // ⭐ GUARDAR USUARIO EN CONTEXTO
       setUser(res.data.usuario);
@@ -155,6 +158,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
 
 
