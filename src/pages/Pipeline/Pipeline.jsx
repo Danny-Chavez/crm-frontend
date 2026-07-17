@@ -14,7 +14,6 @@ import {
 import { validarRut, normalizarRut } from "../../utils/rut";
 import api from "../../utils/axios";
 import { useNavigate } from "react-router-dom";
-import * as XLSX from "xlsx";
 import Customer360 from "../../components/Customer360";
 
 
@@ -430,30 +429,27 @@ export default function Pipeline() {
       OS_Asociada: o.os_id || "",
     }));
 
-    const historialCompleto = [];
+    const encabezados = Object.keys(dataPipeline[0]);
 
-    for (const o of ops) {
-      const res = await api.get(`/oportunidades/${o.id}/historial`);
-      res.data.forEach((h) => {
-        historialCompleto.push({
-          Oportunidad_ID: o.id,
-          Etapa_Anterior: h.etapa_anterior_nombre,
-          Etapa_Nueva: h.etapa_nueva_nombre,
-          Fecha_Movimiento: h.fecha_movimiento,
-          Realizado_Por: h.realizado_por,
-        });
-      });
-    }
+    const filas = dataPipeline.map((o) =>
+      encabezados.map((key) => o[key] ?? "—")
+    );
 
-    const wb = XLSX.utils.book_new();
+    const csvContent =
+      encabezados.join(",") +
+      "\n" +
+      filas.map((f) => f.join(",")).join("\n");
 
-    const wsPipeline = XLSX.utils.json_to_sheet(dataPipeline);
-    XLSX.utils.book_append_sheet(wb, wsPipeline, "Pipeline");
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
 
-    const wsHistorial = XLSX.utils.json_to_sheet(historialCompleto);
-    XLSX.utils.book_append_sheet(wb, wsHistorial, "Historial");
-
-    XLSX.writeFile(wb, "pipeline_completo.xlsx");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Pipeline_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   /* ============================
