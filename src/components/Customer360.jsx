@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import api from "../utils/axios";
-import * as XLSX from "xlsx";
 
 export default function Customer360({ rut, onClose }) {
   const [data, setData] = useState(null);
@@ -53,19 +52,34 @@ export default function Customer360({ rut, onClose }) {
     return null;
   };
 
-  // ⭐ Exportar abonos por vencer a Excel
+  // ⭐ Exportar abonos por vencer a CSV (compatible con Vercel)
   const exportarAbonosExcel = () => {
     if (!data.abonos_vencer || data.abonos_vencer.length === 0) {
       alert("No hay abonos por vencer para exportar.");
       return;
     }
 
-    const ws = XLSX.utils.json_to_sheet(data.abonos_vencer);
-    const wb = XLSX.utils.book_new();
+    const encabezados = Object.keys(data.abonos_vencer[0]);
 
-    XLSX.utils.book_append_sheet(wb, ws, "Abonos por vencer");
+    const filas = data.abonos_vencer.map((a) =>
+      encabezados.map((key) => a[key] ?? "—")
+    );
 
-    XLSX.writeFile(wb, `abonos_por_vencer_${rut}.xlsx`);
+    const csvContent =
+      encabezados.join(",") +
+      "\n" +
+      filas.map((f) => f.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `abonos_por_vencer_${rut}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -284,6 +298,7 @@ export default function Customer360({ rut, onClose }) {
     </div>
   );
 }
+
 
 
 
