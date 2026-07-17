@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import ClienteForm from "./ClienteForm";
+import Customer360 from "../../components/Customer360";
+
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -13,6 +15,10 @@ const Clientes = () => {
 
   // ⭐ Modo solo lectura (Ver)
   const [viewMode, setViewMode] = useState(false);
+
+  // ⭐ NUEVO: Customer360 modal
+  const [showCustomer360, setShowCustomer360] = useState(false);
+  const [customerRut, setCustomerRut] = useState(null);
 
   const fetchClientes = async () => {
     try {
@@ -36,9 +42,9 @@ const Clientes = () => {
   };
 
   const handleView = (cliente) => {
-    setSelectedCliente(cliente);
-    setViewMode(true);
-    setShowForm(true);
+    // ⭐ Ahora abre Customer360
+    setCustomerRut(cliente.rut);
+    setShowCustomer360(true);
   };
 
   const handleCreate = () => {
@@ -106,6 +112,15 @@ const Clientes = () => {
           onClose={() => setShowForm(false)}
           onSaved={fetchClientes}
         />
+      )}
+
+      {/* ⭐ Modal Customer360 */}
+      {showCustomer360 && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-full max-w-5xl p-6 rounded-xl shadow-xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <Customer360 rut={customerRut} onClose={() => setShowCustomer360(false)} />
+          </div>
+        </div>
       )}
 
       {/* Tabla */}
@@ -178,6 +193,7 @@ const Clientes = () => {
 };
 
 export default Clientes;
+
 
 
 

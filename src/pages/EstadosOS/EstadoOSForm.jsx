@@ -3,11 +3,16 @@ import { estadosOSService } from "../../services/estados-os.service";
 
 export default function EstadoOSForm({ estado, onClose, onSaved }) {
   const [form, setForm] = useState(
-    estado || { nombre: "", descripcion: "" }
+    estado || { nombre: "", descripcion: "", es_final: false }
   );
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -59,6 +64,20 @@ export default function EstadoOSForm({ estado, onClose, onSaved }) {
           />
         </div>
 
+        {/* Estado final */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="es_final"
+            checked={form.es_final}
+            onChange={handleChange}
+            className="w-4 h-4"
+          />
+          <label className="text-sm font-medium text-text-main">
+            Estado final (bloquea ediciones de OS)
+          </label>
+        </div>
+
         {/* Botones */}
         <div className="flex justify-end gap-2 pt-2">
           <button
@@ -80,4 +99,5 @@ export default function EstadoOSForm({ estado, onClose, onSaved }) {
     </div>
   );
 }
+
 

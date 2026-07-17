@@ -109,31 +109,18 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     pagina * porPagina
   );
 
-  const exportarExcel = () => {
+ const exportarExcel = () => {
     if (filtradas.length === 0) return;
 
-    const encabezados = [
-      "Cliente RUT",
-      "Estado",
-      "Fecha creación",
-      "Descripción",
-      "Técnico",
-      "Prioridad",
-      "Categoría",
-      "Comercio ID",
-    ];
+    // ⭐ Obtener todas las claves de la primera OS
+    const encabezados = Object.keys(filtradas[0]);
 
-    const filas = filtradas.map((o) => [
-      sanearCampo(o.cliente_rut),
-      sanearCampo(o.estado),
-      sanearCampo(o.fecha_creacion),
-      sanearCampo(o.descripcion),
-      sanearCampo(o.tecnico),
-      sanearCampo(o.prioridad),
-      sanearCampo(o.categoria),
-      sanearCampo(o.comercio_id),
-    ]);
+    // ⭐ Construir filas dinámicas con TODOS los campos
+    const filas = filtradas.map((o) =>
+      encabezados.map((key) => sanearCampo(o[key]))
+    );
 
+    // ⭐ Generar CSV
     const csvContent =
       encabezados.join(",") +
       "\n" +
@@ -150,6 +137,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     a.click();
     URL.revokeObjectURL(url);
   };
+
 
   return (
     <div className="bg-surface rounded-xl shadow-md overflow-hidden font-sans p-4">
@@ -240,6 +228,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
           <tr>
             <th className="p-4 font-semibold text-left">OS #</th>
             <th className="p-4 font-semibold text-left">Cliente (RUT)</th>
+            <th className="p-4 font-semibold text-left">Nombre Fantasía</th>
             <th className="p-4 font-semibold text-left">Estado</th>
             <th className="p-4 font-semibold text-left">Fecha creación</th>
             <th className="p-4 font-semibold text-left">Técnico</th>
@@ -256,6 +245,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                 index % 2 === 0 ? "bg-white" : "bg-gray-50"
               }`}
             >
+              {/* OS # */}
               <td className="p-4 font-semibold text-blue-600 flex flex-col">
                 <span>OS #{o.id}</span>
 
@@ -266,8 +256,17 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                 )}
               </td>
 
+              {/* Cliente */}
               <td className="p-4">{sanearCampo(o.cliente_rut)}</td>
 
+              {/* ⭐ Nombre Fantasía */}
+              <td className="p-4">
+                {sanearCampo(o.nombre_fantasia) || (
+                  <span className="text-gray-400">—</span>
+                )}
+              </td>
+
+              {/* Estado */}
               <td className="p-4">
                 <span
                   className={`px-2 py-1 rounded text-xs font-semibold ${badgeEstado(
@@ -278,18 +277,24 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                 </span>
               </td>
 
+              {/* Fecha creación */}
               <td className="p-4">
                 {o.fecha_creacion
                   ? new Date(o.fecha_creacion).toLocaleString()
                   : ""}
               </td>
 
+              {/* Técnico */}
               <td className="p-4">{sanearCampo(o.tecnico) || "Sin técnico"}</td>
 
+              {/* Categoría */}
               <td className="p-4">{sanearCampo(o.categoria) || "Sin categoría"}</td>
 
+              {/* Acciones */}
               <td className="p-4">
                 <div className="flex justify-end gap-2">
+
+                  {/* Ver */}
                   <button
                     onClick={() => onView(o)}
                     className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
@@ -297,6 +302,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     <EyeIcon className="w-4 h-4" /> Ver
                   </button>
 
+                  {/* Editar */}
                   {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
                     <button
                       onClick={() => onEdit(limpiarOS(o))}
@@ -306,6 +312,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     </button>
                   )}
 
+                  {/* Clonar */}
                   {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
                     <button
                       onClick={() => handleClone(o.id)}
@@ -315,6 +322,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                     </button>
                   )}
 
+                  {/* Eliminar */}
                   {user?.rol === "SuperAdmin" && onDelete && (
                     <button
                       onClick={() => onDelete(o.id)}
@@ -323,12 +331,14 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                       <TrashIcon className="w-4 h-4" /> Eliminar
                     </button>
                   )}
+
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
 
       {/* PAGINACIÓN */}
       <div className="flex justify-center items-center gap-3 mt-4">

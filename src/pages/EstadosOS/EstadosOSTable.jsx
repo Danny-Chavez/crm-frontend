@@ -8,47 +8,82 @@ export default function EstadosOSTable({ estados, onEdit, onDelete }) {
           <tr>
             <th className="p-4 font-semibold text-left">Nombre</th>
             <th className="p-4 font-semibold text-left">Descripción</th>
+            <th className="p-4 font-semibold text-left">Final</th>
             <th className="p-4 font-semibold text-right">Acciones</th>
           </tr>
         </thead>
 
         {/* BODY */}
         <tbody>
-          {estados.map((e, index) => (
-            <tr
-              key={e.id}
-              className={`border-t border-border hover:bg-gray-50 transition ${
-                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-              }`}
-            >
-              <td className="p-4">{e.nombre}</td>
-              <td className="p-4">{e.descripcion}</td>
+          {estados.map((e, index) => {
+            const esFinal = e.es_final === true;
 
-              <td className="p-4 text-right flex gap-2 justify-end">
+            return (
+              <tr
+                key={e.id}
+                className={`border-t border-border hover:bg-gray-50 transition ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                }`}
+              >
+                {/* Nombre */}
+                <td className="p-4">{e.nombre}</td>
 
-                {/* EDITAR */}
-                <button
-                  onClick={() => onEdit(e)}
-                  className="px-3 py-1 bg-primary hover:bg-primary-dark text-white rounded-lg text-xs font-semibold transition"
-                >
-                  Editar
-                </button>
+                {/* Descripción */}
+                <td className="p-4">{e.descripcion}</td>
 
-                {/* ELIMINAR */}
-                <button
-                  onClick={() => onDelete(e)}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition"
-                >
-                  Eliminar
-                </button>
+                {/* Estado final */}
+                <td className="p-4">
+                  {esFinal ? (
+                    <span
+                      className="text-red-600 font-bold flex items-center gap-1"
+                      title="Este estado es final y bloquea ediciones de OS"
+                    >
+                      🔒 Final
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </td>
 
-              </td>
-            </tr>
-          ))}
+                {/* Acciones */}
+                <td className="p-4 text-right flex gap-2 justify-end">
+
+                  {/* EDITAR */}
+                  <button
+                    onClick={() => !esFinal && onEdit(e)}
+                    disabled={esFinal}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition
+                      ${esFinal
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary-dark text-white"
+                      }`}
+                  >
+                    Editar
+                  </button>
+
+                  {/* ELIMINAR */}
+                  <button
+                    onClick={() => !esFinal && onDelete(e)}
+                    disabled={esFinal}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition
+                      ${esFinal
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-red-600 hover:bg-red-700 text-white"
+                      }`}
+                  >
+                    Eliminar
+                  </button>
+
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
 
       </table>
     </div>
   );
 }
+
+
 

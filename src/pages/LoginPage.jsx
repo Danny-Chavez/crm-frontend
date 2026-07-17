@@ -44,8 +44,12 @@ export default function LoginPage() {
       // ⭐ GUARDAR TOKEN CORRECTO
       localStorage.setItem("token", res.data.token);
 
-      // ⭐ GUARDAR USUARIO EN LOCALSTORAGE (CRÍTICO)
+      // ⭐ GUARDAR USUARIO COMPLETO
       localStorage.setItem("user", JSON.stringify(res.data.usuario));
+
+      // ⭐ GUARDAR NOMBRE E ID DEL USUARIO (CRÍTICO PARA HISTORIAL)
+      localStorage.setItem("usuario_nombre", res.data.usuario.nombre);
+      localStorage.setItem("usuario_id", res.data.usuario.id);
 
       // ⭐ GUARDAR USUARIO EN CONTEXTO
       setUser(res.data.usuario);
@@ -158,6 +162,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
 
 

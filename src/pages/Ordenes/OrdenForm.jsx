@@ -75,8 +75,6 @@ export default function OrdenForm({
       num_serie_cambio: "",
       os_in: "",
       os_out: "",
-
-      /* ⭐ NUEVOS CAMPOS OS */
       chip: "",
       modelo_dispositivo: "",
       nombre_fantasia: "",
@@ -217,7 +215,6 @@ export default function OrdenForm({
       os_in: clean(form.os_in),
       os_out: clean(form.os_out),
 
-      /* ⭐ NUEVOS CAMPOS OS */
       chip: clean(form.chip),
       modelo_dispositivo: clean(form.modelo_dispositivo),
       nombre_fantasia: clean(form.nombre_fantasia),
@@ -242,8 +239,18 @@ export default function OrdenForm({
         await registrarCambio(osId, "cambio_prioridad", `Prioridad cambiada a "${form.prioridad}"`);
       }
 
-      await ordenesService.update(osId, payload);
-      await registrarCambio(osId, "actualizacion", "Orden actualizada");
+      /* ⭐ POP-UP PARA OS CERRADA */
+      try {
+        await ordenesService.update(osId, payload);
+        await registrarCambio(osId, "actualizacion", "Orden actualizada");
+      } catch (error) {
+        const mensaje =
+          error.response?.data?.error ||
+          "Error al actualizar la orden de servicio.";
+
+        alert(mensaje);
+        return;
+      }
 
     } else {
       /* ⭐ SI ES NUEVA */
@@ -275,6 +282,9 @@ export default function OrdenForm({
     onClose();
   };
 
+  /* ⭐ DESACTIVAR BOTONES SI OS ESTÁ CERRADA */
+  const esFinal = orden && ["Cerrada OK", "Cerrada NOK", "Cerrada"].includes(orden.estado);
+
   /* ------------------ JSX DEL FORMULARIO ------------------ */
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center font-sans">
@@ -295,6 +305,7 @@ export default function OrdenForm({
             value={form.cliente_rut}
             onChange={(e) => setForm({ ...form, cliente_rut: e.target.value })}
             placeholder="12.345.678-K"
+            disabled={esFinal}
           />
         </div>
 
@@ -307,6 +318,7 @@ export default function OrdenForm({
             value={form.comercio_id}
             onChange={handleChange}
             placeholder="Ej: 2220000289"
+            disabled={esFinal}
           />
         </div>
 
@@ -319,6 +331,7 @@ export default function OrdenForm({
             value={form.fono_contacto}
             onChange={handleChange}
             placeholder="Ej: +56 9 1234 5678"
+            disabled={esFinal}
           />
         </div>
 
@@ -330,6 +343,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.falla || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione falla</option>
             {fallasHardcode.map((f, i) => (
@@ -347,6 +361,7 @@ export default function OrdenForm({
             value={form.num_serie}
             onChange={handleChange}
             placeholder="Ej: SN123456"
+            disabled={esFinal}
           />
         </div>
 
@@ -359,6 +374,7 @@ export default function OrdenForm({
             value={form.nom_retira}
             onChange={handleChange}
             placeholder="Ej: Juan Pérez"
+            disabled={esFinal}
           />
         </div>
 
@@ -371,6 +387,7 @@ export default function OrdenForm({
             value={form.dir_despacho}
             onChange={handleChange}
             placeholder="Ej: Av. Siempre Viva 123"
+            disabled={esFinal}
           />
         </div>
 
@@ -383,6 +400,7 @@ export default function OrdenForm({
             value={form.com_despacho}
             onChange={handleChange}
             placeholder="Ej: Santiago Centro"
+            disabled={esFinal}
           />
         </div>
 
@@ -395,6 +413,7 @@ export default function OrdenForm({
             value={form.num_serie_cambio}
             onChange={handleChange}
             placeholder="Ej: SN987654"
+            disabled={esFinal}
           />
         </div>
 
@@ -407,6 +426,7 @@ export default function OrdenForm({
             value={form.os_in}
             onChange={handleChange}
             placeholder="Ej: 12345"
+            disabled={esFinal}
           />
         </div>
 
@@ -419,6 +439,7 @@ export default function OrdenForm({
             value={form.os_out}
             onChange={handleChange}
             placeholder="Ej: 67890"
+            disabled={esFinal}
           />
         </div>
 
@@ -431,6 +452,7 @@ export default function OrdenForm({
             value={form.chip || ""}
             onChange={handleChange}
             placeholder="Ej: 893720XXXXXXXXXXX"
+            disabled={esFinal}
           />
         </div>
 
@@ -442,10 +464,9 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.modelo_dispositivo || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione modelo</option>
-
-            {/* ⭐ HARDCOLEADOS */}
             <option value="Verifone C680">Verifone C680</option>
             <option value="Verifone T650p">Verifone T650p</option>
             <option value="Telpo TPS390">Telpo TPS390</option>
@@ -453,7 +474,6 @@ export default function OrdenForm({
             <option value="PAX S80">PAX S80</option>
             <option value="Android Generico">Android Generico</option>
             <option value="PDV">PDV</option>
-
           </select>
         </div>
 
@@ -466,10 +486,11 @@ export default function OrdenForm({
             value={form.nombre_fantasia || ""}
             onChange={handleChange}
             placeholder="Ej: Minimarket Don Pepe"
+            disabled={esFinal}
           />
         </div>
 
-        {/* ⭐ SEGUIMIENTO CORREO */}
+                {/* ⭐ SEGUIMIENTO CORREO */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-text-main">Seguimiento correo</label>
           <textarea
@@ -479,10 +500,11 @@ export default function OrdenForm({
             onChange={handleChange}
             placeholder="Notas de seguimiento por correo..."
             rows={3}
+            disabled={esFinal}
           />
         </div>
 
-                {/* Estado OS */}
+        {/* Estado OS */}
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-text-main">Estado</label>
           <select
@@ -491,6 +513,7 @@ export default function OrdenForm({
                       focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             value={form.estado || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione un estado</option>
             {estados.map((e) => (
@@ -510,6 +533,7 @@ export default function OrdenForm({
                       focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             value={form.tecnico_id || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Asignar técnico</option>
             {tecnicos.map((t) => (
@@ -529,6 +553,7 @@ export default function OrdenForm({
                       focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             value={form.prioridad || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione prioridad</option>
             <option value="baja">Baja</option>
@@ -564,6 +589,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.categoria || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione categoría</option>
             {categoriasHardcode.map((c) => (
@@ -582,6 +608,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.origen || ""}
             onChange={handleChange}
+            disabled={esFinal}
           >
             <option value="">Seleccione origen</option>
             <option value="web">Web</option>
@@ -602,6 +629,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.costo}
             onChange={handleChange}
+            disabled={esFinal}
           />
         </div>
 
@@ -614,6 +642,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.notas_internas}
             onChange={handleChange}
+            disabled={esFinal}
           />
         </div>
 
@@ -626,6 +655,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.resultado}
             onChange={handleChange}
+            disabled={esFinal}
           />
         </div>
 
@@ -638,6 +668,7 @@ export default function OrdenForm({
             className="border border-border p-3 rounded-lg text-sm"
             value={form.descripcion}
             onChange={handleChange}
+            disabled={esFinal}
           />
         </div>
 
@@ -650,6 +681,7 @@ export default function OrdenForm({
             multiple
             onChange={handleFiles}
             className="border border-border p-3 rounded-lg text-sm bg-white"
+            disabled={esFinal}
           />
 
           {files.length > 0 && (
@@ -660,6 +692,21 @@ export default function OrdenForm({
             </ul>
           )}
         </div>
+
+        {orden && esFinal && user?.rol === "SuperAdmin" && (
+          <button
+            type="button"
+            onClick={async () => {
+              await ordenesService.reabrir(orden.id);
+              alert("La OS fue reabierta y ahora puede ser editada.");
+              onSaved();
+              onClose();
+            }}
+            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-semibold transition"
+          >
+            Reabrir OS
+          </button>
+        )}
 
         {/* Botones */}
         <div className="flex justify-end gap-2 pt-2">
@@ -673,9 +720,14 @@ export default function OrdenForm({
 
           <button
             type="submit"
-            className="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-semibold transition"
+            disabled={esFinal}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition 
+              ${esFinal 
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                : "bg-primary hover:bg-primary-dark text-white"
+              }`}
           >
-            Guardar
+            {esFinal ? "No editable" : "Guardar"}
           </button>
         </div>
 

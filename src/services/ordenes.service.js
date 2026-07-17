@@ -75,7 +75,21 @@ export const ordenesService = {
   },
 
   // ============================
-  // ⭐ NUEVO: CLONAR OS
+  // ⭐ NUEVO: REABRIR OS (SuperAdmin)
+  // ============================
+  reabrir: async (id) => {
+    try {
+      // Tu backend usa estado textual, no estado_id
+      const res = await api.patch(`/ordenes/reabrir/${id}`);
+      return res.data;
+    } catch (err) {
+      console.error("❌ ERROR OS FRONT (reabrir):", err.response?.data || err);
+      throw err;
+    }
+  },
+
+  // ============================
+  // ⭐ CLONAR OS
   // ============================
   clonar: async (id) => {
     try {
@@ -87,6 +101,8 @@ export const ordenesService = {
     }
   }
 };
+
+
 
 
 

@@ -13,18 +13,51 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
     comuna: comercio?.comuna || "",
     ciudad: comercio?.ciudad || "",
     estado: comercio?.estado || "activo",
+
+    // ⭐ Nuevo campo: Tipo de abono
+    tipo_abono: comercio?.tipo_abono || "Mensual",
+
+    // ⭐ Nuevos campos: fechas
+    fecha_abono: comercio?.fecha_abono || "",
+    fecha_renovacion: comercio?.fecha_renovacion || "",
   });
 
   const normalize = (v) => (v === "" ? null : v);
 
+  const calcularRenovacion = (fecha) => {
+    if (!fecha) return "";
+    const f = new Date(fecha);
+    f.setFullYear(f.getFullYear() + 1);
+    return f.toISOString().split("T")[0];
+  };
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // ⭐ Si cambia la fecha de abono y el tipo es anual → recalcular renovación
+    if (name === "fecha_abono") {
+      const nuevaRenovacion =
+        form.tipo_abono === "Anual" ? calcularRenovacion(value) : "";
+      setForm({ ...form, fecha_abono: value, fecha_renovacion: nuevaRenovacion });
+      return;
+    }
+
+    // ⭐ Si cambia el tipo de abono → recalcular renovación
+    if (name === "tipo_abono") {
+      const nuevaRenovacion =
+        value === "Anual" && form.fecha_abono
+          ? calcularRenovacion(form.fecha_abono)
+          : "";
+      setForm({ ...form, tipo_abono: value, fecha_renovacion: nuevaRenovacion });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ⭐ Validaciones obligatorias
     if (!form.comercio_id.trim()) {
       alert("Debe ingresar el código de comercio");
       return;
@@ -43,6 +76,11 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
       comuna: normalize(form.comuna),
       ciudad: normalize(form.ciudad),
       estado: normalize(form.estado),
+
+      // ⭐ Campos nuevos
+      tipo_abono: normalize(form.tipo_abono),
+      fecha_abono: normalize(form.fecha_abono),
+      fecha_renovacion: normalize(form.fecha_renovacion),
     };
 
     console.log("🟥 Payload enviado al backend:", payload);
@@ -69,7 +107,6 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
         {comercio ? "Editar Comercio" : "Nuevo Comercio"}
       </h2>
 
-      {/* FORMULARIO */}
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Sección: Datos del comercio */}
@@ -78,7 +115,6 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
 
           <div className="grid grid-cols-2 gap-4">
 
-            {/* Código de comercio */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-600">Código de comercio</label>
               <input
@@ -91,7 +127,6 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
               />
             </div>
 
-            {/* Nombre del comercio */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-600">Nombre del comercio</label>
               <input
@@ -107,7 +142,7 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
           </div>
         </div>
 
-        {/* Sección: Dirección */}
+        {/* Dirección */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-700">Dirección</h3>
 
@@ -149,7 +184,7 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
           </div>
         </div>
 
-        {/* Sección: Estado */}
+        {/* Estado */}
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-700">Estado</h3>
 
@@ -165,6 +200,48 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
               <option value="inactivo">Inactivo</option>
             </select>
           </div>
+        </div>
+
+        {/* Tipo de abono */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-700">Tipo de abono</h3>
+
+          <div className="flex flex-col gap-1 w-40">
+            <label className="text-xs text-gray-600">Tipo de abono</label>
+
+            <select
+              name="tipo_abono"
+              value={form.tipo_abono}
+              onChange={handleChange}
+              className="input-base"
+            >
+              <option value="Mensual">Mensual</option>
+              <option value="Anual">Anual</option>
+            </select>
+          </div>
+        </div>
+
+        {/* ⭐ Fecha de abono */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-700">Fecha de abono</h3>
+
+          <div className="flex flex-col gap-1 w-40">
+            <label className="text-xs text-gray-600">Fecha de abono</label>
+            <input
+              type="date"
+              name="fecha_abono"
+              value={form.fecha_abono}
+              onChange={handleChange}
+              className="input-base"
+            />
+          </div>
+
+          {/* ⭐ Mostrar renovación automática */}
+          {form.tipo_abono === "Anual" && form.fecha_abono && (
+            <p className="text-xs text-gray-500">
+              Renovación automática: <strong>{form.fecha_renovacion}</strong>
+            </p>
+          )}
         </div>
 
         {/* Botones */}
@@ -193,6 +270,8 @@ const ComercioForm = ({ cliente_id, comercio, onClose, onSaved }) => {
 };
 
 export default ComercioForm;
+
+
 
 
 
