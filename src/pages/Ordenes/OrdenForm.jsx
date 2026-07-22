@@ -18,7 +18,8 @@ const categoriasHardcode = [
   { id: 2, nombre: "Instalación" },
   { id: 3, nombre: "Retiro" },
   { id: 4, nombre: "Enrolamiento" },
-  { id: 5, nombre: "Baja de servicio" }
+  { id: 5, nombre: "Baja de servicio" },
+  { id: 6, nombre: "Papel" }
 ];
 
 /* ------------------ FALLAS HARDCODEADAS ------------------ */

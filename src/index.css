@@ -84,5 +84,12 @@
   cursor: pointer;
 }
 
+.dragging {
+  position: relative;
+  z-index: 9999 !important;
+  pointer-events: none;
+}
+
+
 
 

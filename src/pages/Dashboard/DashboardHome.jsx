@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import useAuth from "../../auth/useAuth";
+import { Link } from "react-router-dom";   // ⭐ IMPORTANTE
 
-// Librerías de gráficos
 import {
   BarChart,
   Bar,
@@ -13,7 +13,19 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
+
+import {
+  FaUsers,
+  FaTools,
+  FaChartLine,
+  FaUserCog,
+  FaFolderOpen,
+  FaExclamationTriangle,
+  FaPlusCircle,
+  FaStore,
+} from "react-icons/fa";
 
 export default function DashboardHome() {
   const { user } = useAuth();
@@ -37,9 +49,8 @@ export default function DashboardHome() {
     lastSync: null,
   });
 
-  // ⭐ CORRECCIÓN CRÍTICA: esperar a que user esté listo
   useEffect(() => {
-    if (!user) return; // ⬅ evita llamadas sin token
+    if (!user) return;
 
     const cargarDashboard = async () => {
       try {
@@ -48,31 +59,28 @@ export default function DashboardHome() {
           ordenesRes,
           pipelineRes,
           adjuntosRes,
-          estadosRes,
+          etapasRes,
+          tecnicosRes,
         ] = await Promise.all([
           api.get("/usuarios"),
           api.get("/ordenes"),
-          api.get("/pipeline-stages"),
+          api.get("/pipeline"),
           api.get("/adjuntos"),
-          api.get("/estados-os"),
+          api.get("/pipeline-stages"),
+          api.get("/tecnicos"),
         ]);
 
-        // FILTRAR TÉCNICOS DESDE USUARIOS
-        const tecnicosActivos = usuariosRes.data.filter(
-          (u) => u.rol === "tecnico" && u.activo === true
-        );
+        const cantidadTecnicos = tecnicosRes.data.length;
 
-        // MÉTRICAS
         setStats({
           usuarios: usuariosRes.data.length,
           ordenes: ordenesRes.data.length,
           oportunidades: pipelineRes.data.length,
-          tecnicos: tecnicosActivos.length,
+          tecnicos: cantidadTecnicos,
           adjuntos: adjuntosRes.data.length,
-          estados: estadosRes.data.length,
+          estados: etapasRes.data.length,
         });
 
-        // ÓRDENES POR ESTADO
         const estadosCount = {};
         ordenesRes.data.forEach((o) => {
           estadosCount[o.estado] = (estadosCount[o.estado] || 0) + 1;
@@ -84,32 +92,58 @@ export default function DashboardHome() {
           }))
         );
 
-        // PIPELINE POR ETAPA
         const etapasCount = {};
         pipelineRes.data.forEach((p) => {
-          etapasCount[p.etapa] = (etapasCount[p.etapa] || 0) + 1;
-        });
-        setPipelineEtapas(
-          Object.entries(etapasCount).map(([etapa, count]) => ({
-            etapa,
-            count,
-          }))
-        );
+          const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
+          const nombreEtapa = etapaObj ? etapaObj.nombre : "Sin etapa";
+          const colorEtapa = etapaObj ? etapaObj.color : "#999999";
 
-        // CARGA POR TÉCNICO
+          if (!etapasCount[nombreEtapa]) {
+            etapasCount[nombreEtapa] = {
+              etapa: nombreEtapa,
+              count: 0,
+              color: colorEtapa,
+            };
+          }
+
+          etapasCount[nombreEtapa].count += 1;
+        });
+
+        setPipelineEtapas(Object.values(etapasCount));
+
+        const palette = [
+          "#3B82F6",
+          "#10B981",
+          "#F59E0B",
+          "#EF4444",
+          "#8B5CF6",
+          "#EC4899",
+          "#14B8A6",
+          "#F97316",
+        ];
+
         const carga = {};
+
         ordenesRes.data.forEach((o) => {
           if (!o.tecnico_id) return;
-          carga[o.tecnico_id] = (carga[o.tecnico_id] || 0) + 1;
-        });
-        setCargaTecnicos(
-          Object.entries(carga).map(([tecnico_id, count]) => ({
-            tecnico_id,
-            count,
-          }))
-        );
 
-        // ACTIVIDAD RECIENTE
+          const tecnico = tecnicosRes.data.find((t) => t.id === o.tecnico_id);
+          const nombreTecnico = tecnico ? tecnico.nombre : `Técnico ${o.tecnico_id}`;
+
+          if (!carga[nombreTecnico]) {
+            const index = Object.keys(carga).length;
+            carga[nombreTecnico] = {
+              tecnico: nombreTecnico,
+              count: 0,
+              color: palette[index % palette.length],
+            };
+          }
+
+          carga[nombreTecnico].count += 1;
+        });
+
+        setCargaTecnicos(Object.values(carga));
+
         const actividadOrdenes = ordenesRes.data
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           .slice(0, 5)
@@ -123,16 +157,20 @@ export default function DashboardHome() {
         const actividadPipeline = pipelineRes.data
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
           .slice(0, 5)
-          .map((p) => ({
-            tipo: "Oportunidad",
-            id: p.id,
-            fecha: p.created_at,
-            descripcion: `Oportunidad en etapa ${p.etapa}`,
-          }));
+          .map((p) => {
+            const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
+            return {
+              tipo: "Oportunidad",
+              id: p.id,
+              fecha: p.created_at,
+              descripcion: `Oportunidad en etapa ${
+                etapaObj ? etapaObj.nombre : "Sin etapa"
+              }`,
+            };
+          });
 
         setActividad([...actividadOrdenes, ...actividadPipeline]);
 
-        // ESTADO DEL SISTEMA
         setSystemStatus({
           api: true,
           latency: Math.floor(Math.random() * 120),
@@ -145,33 +183,30 @@ export default function DashboardHome() {
     };
 
     cargarDashboard();
-  }, [user]); // ⬅ CORRECCIÓN: depende de user
+  }, [user]);
 
   return (
     <div className="p-6 space-y-10">
 
-      {/* TÍTULO */}
-      <h1 className="text-3xl font-bold text-primary">
-        Dashboard Corporativo
-      </h1>
-      <p className="text-gray-600">Bienvenido, {user?.nombre}</p>
-
-      {/* MÉTRICAS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard title="Usuarios" value={stats.usuarios} color="blue" />
-        <MetricCard title="Órdenes" value={stats.ordenes} color="green" />
-        <MetricCard title="Oportunidades" value={stats.oportunidades} color="purple" />
-        <MetricCard title="Técnicos" value={stats.tecnicos} color="orange" />
-        <MetricCard title="Adjuntos" value={stats.adjuntos} color="rose" />
-        <MetricCard title="Estados OS" value={stats.estados} color="cyan" />
+      <div>
+        <h1 className="text-4xl font-bold text-primary">Dashboard Corporativo</h1>
+        <p className="text-gray-600 text-lg">Bienvenido, {user?.nombre}</p>
       </div>
 
-      {/* GRÁFICOS */}
+      <QuickActions />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <MetricCard title="Usuarios" value={stats.usuarios} icon={FaUsers} color="blue" />
+        <MetricCard title="Órdenes" value={stats.ordenes} icon={FaTools} color="green" />
+        <MetricCard title="Oportunidades" value={stats.oportunidades} icon={FaChartLine} color="purple" />
+        <MetricCard title="Técnicos" value={stats.tecnicos} icon={FaUserCog} color="orange" />
+        <MetricCard title="Adjuntos" value={stats.adjuntos} icon={FaFolderOpen} color="rose" />
+        <MetricCard title="Estados OS" value={stats.estados} icon={FaExclamationTriangle} color="cyan" />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-        {/* ÓRDENES POR ESTADO */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-4">Órdenes por Estado</h2>
+        <ChartCard title="Órdenes por Estado">
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -179,79 +214,148 @@ export default function DashboardHome() {
                 dataKey="value"
                 nameKey="name"
                 outerRadius={100}
-                fill="#8884d8"
-                label
+                label={({ name, value }) => `${name}: ${value}`}
               >
                 {ordenesPorEstado.map((entry, index) => (
-                  <Cell key={index} fill={["#4F46E5", "#10B981", "#F59E0B", "#EF4444"][index % 4]} />
+                  <Cell
+                    key={index}
+                    fill={[
+                      "#4F46E5",
+                      "#10B981",
+                      "#F59E0B",
+                      "#EF4444",
+                      "#3B82F6",
+                      "#14B8A6",
+                    ][index % 6]}
+                  />
                 ))}
               </Pie>
-              <Tooltip />
+
+              <Tooltip
+                formatter={(value, name, props) => [`${value} órdenes`, props.payload.name]}
+              />
+
+              <Legend
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
+              />
             </PieChart>
           </ResponsiveContainer>
-        </div>
+        </ChartCard>
 
-        {/* PIPELINE */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-4">Pipeline por Etapa</h2>
+        <ChartCard title="Pipeline por Etapa">
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={pipelineEtapas}>
-              <XAxis dataKey="etapa" />
+            <BarChart data={pipelineEtapas} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+              <XAxis dataKey="etapa" tick={{ fontSize: 12 }} />
               <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#6366F1" />
+              <Tooltip formatter={(value) => `${value} oportunidades`} />
+
+              <Bar dataKey="count">
+                {pipelineEtapas.map((item, index) => (
+                  <Cell key={index} fill={item.color} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </div>
-      </div>
+        </ChartCard>
 
-      {/* CARGA POR TÉCNICO */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Carga de Trabajo por Técnico</h2>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={cargaTecnicos}>
-            <XAxis dataKey="tecnico_id" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="count" fill="#F97316" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+        <ChartCard title="Carga de Trabajo por Técnico">
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={cargaTecnicos}>
+              <XAxis dataKey="tecnico" tick={{ fontSize: 12 }} />
+              <YAxis />
+              <Tooltip formatter={(value) => `${value} órdenes`} />
+              <Bar dataKey="count">
+                {cargaTecnicos.map((item, index) => (
+                  <Cell key={index} fill={item.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-      {/* ACTIVIDAD RECIENTE */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Actividad Reciente</h2>
-        <ul className="space-y-3">
-          {actividad.map((a, i) => (
-            <li key={i} className="border-b pb-2">
-              <p className="font-medium">{a.tipo} #{a.id}</p>
-              <p className="text-sm text-gray-600">{a.descripcion}</p>
-              <p className="text-xs text-gray-400">{new Date(a.fecha).toLocaleString()}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
+        <ChartCard title="Actividad Reciente">
+          <ul className="space-y-3">
+            {actividad.map((a, i) => (
+              <li key={i} className="border-b pb-2">
+                <p className="font-medium">{a.tipo} #{a.id}</p>
+                <p className="text-sm text-gray-600">{a.descripcion}</p>
+                <p className="text-xs text-gray-400">{new Date(a.fecha).toLocaleString()}</p>
+              </li>
+            ))}
+          </ul>
+        </ChartCard>
 
-      {/* ESTADO DEL SISTEMA */}
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4">Estado del Sistema</h2>
-        <p>API: {systemStatus.api ? "🟢 Online" : "🔴 Offline"}</p>
-        <p>Latencia: {systemStatus.latency} ms</p>
-        <p>Última sincronización: {systemStatus.lastSync}</p>
+        <ChartCard title="Estado del Sistema">
+          <p>API: {systemStatus.api ? "🟢 Online" : "🔴 Offline"}</p>
+          <p>Latencia: {systemStatus.latency} ms</p>
+          <p>Última sincronización: {systemStatus.lastSync}</p>
+        </ChartCard>
+
       </div>
 
     </div>
   );
 }
 
-function MetricCard({ title, value, color }) {
+/* COMPONENTES PRO */
+
+function MetricCard({ title, value, icon: Icon, color }) {
   return (
-    <div className="p-5 rounded-xl border border-gray-200 shadow-sm bg-gray-50">
-      <p className="text-sm text-gray-600">{title}</p>
-      <p className={`text-3xl font-bold text-${color}-600 mt-2`}>{value}</p>
+    <div className="p-5 rounded-xl border border-gray-200 shadow-sm bg-white flex items-center gap-4">
+      <div className={`p-3 rounded-lg bg-${color}-100 text-${color}-600`}>
+        <Icon size={28} />
+      </div>
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
+      </div>
     </div>
   );
 }
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow">
+      <h2 className="text-lg font-semibold mb-4">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function QuickActions() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <QuickButton title="Nueva OS" icon={FaPlusCircle} to="/ordenes?nueva=1" />
+      <QuickButton title="Nuevo Cliente" icon={FaUsers} to="/clientes?nuevo=1" />
+      <QuickButton title="Pipeline" icon={FaChartLine} to="/pipeline" />
+      <QuickButton title="Clientes" icon={FaStore} to="/clientes" />
+    </div>
+  );
+}
+
+function QuickButton({ title, icon: Icon, to }) {
+  return (
+    <Link
+      to={to}
+      className="p-4 bg-primary text-white rounded-xl shadow flex items-center gap-3 hover:bg-primary-dark transition"
+    >
+      <Icon size={22} />
+      <span className="font-medium">{title}</span>
+    </Link>
+  );
+}
+
+
+
+
+
+
+
+
+
+
 
 
 

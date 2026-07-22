@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import ClienteForm from "./ClienteForm";
 import Customer360 from "../../components/Customer360";
+import { useLocation } from "react-router-dom";
+
 
 
 const Clientes = () => {
@@ -9,6 +11,8 @@ const Clientes = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const location = useLocation();                 // ⭐ NUEVO
+  const params = new URLSearchParams(location.search); // ⭐ NUEVO
 
   // ⭐ Filtro por RUT
   const [filtroRut, setFiltroRut] = useState("");

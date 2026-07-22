@@ -26,7 +26,7 @@ export default function OrdenHistorial({ ordenId }) {
     await historialService.add(ordenId, {
       tipo: "comentario",
       descripcion: comentario,
-      usuario: "Sistema",           // ⭐ NUEVO
+      usuario: localStorage.getItem("usuario_nombre"), // ⭐ NUEVO
       fecha: new Date().toISOString() // ⭐ NUEVO
     });
 
