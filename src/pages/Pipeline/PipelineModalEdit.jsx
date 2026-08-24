@@ -1,12 +1,13 @@
-export default function PipelineModalCreate({
+export default function PipelineModalEdit({
   show,
   form,
   stages,
   vendedores,
   productos,
+  actividades,
   handleChange,
   onClose,
-  onCreate,
+  onSave,
 }) {
   if (!show) return null;
 
@@ -14,9 +15,7 @@ export default function PipelineModalCreate({
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-lg border border-gray-200 max-h-[90vh] overflow-y-auto">
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Nueva oportunidad
-        </h2>
+        <h2 className="text-xl font-bold mb-4">Editar oportunidad</h2>
 
         <div className="space-y-4">
 
@@ -379,6 +378,28 @@ export default function PipelineModalCreate({
 
         </div>
 
+        {/* ACTIVIDADES */}
+        <div className="mt-6">
+          <h3 className="text-md font-semibold mb-2">Actividades</h3>
+
+          {actividades.length === 0 ? (
+            <p className="text-sm text-gray-500">No hay actividades registradas.</p>
+          ) : (
+            actividades.map((a) => (
+              <div key={a.id} className="border-b border-gray-200 py-2 text-sm">
+                <p><strong>{a.tipo}</strong></p>
+                <p className="text-xs text-gray-500">
+                  {new Date(a.fecha).toLocaleString("es-CL")}
+                </p>
+                <p className="text-xs text-gray-600">Usuario: {a.usuario}</p>
+                {a.comentario && (
+                  <p className="text-sm mt-1">{a.comentario}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Botones */}
         <div className="flex justify-end gap-3 mt-6">
           <button
@@ -389,10 +410,10 @@ export default function PipelineModalCreate({
           </button>
 
           <button
-            onClick={onCreate}
+            onClick={onSave}
             className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
           >
-            Crear oportunidad
+            Guardar cambios
           </button>
         </div>
 
@@ -400,4 +421,3 @@ export default function PipelineModalCreate({
     </div>
   );
 }
-

@@ -6,6 +6,17 @@ import OrdenForm from "./OrdenForm";
 export default function OrdenesPage() {
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ⭐ PAGINACIÓN
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // ⭐ FILTROS (los mismos que usa OrdenesTable)
+  const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [filtroCategoria, setFiltroCategoria] = useState("todos");
+  const [filtroComercio, setFiltroComercio] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+
   const [modalOpen, setModalOpen] = useState(false);
   const [ordenEdit, setOrdenEdit] = useState(null);
 
@@ -13,16 +24,35 @@ export default function OrdenesPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [ordenDetalles, setOrdenDetalles] = useState(null);
 
+  // ⭐ Cargar OS con paginación + filtros backend
   const cargarOrdenes = async () => {
-    setLoading(true);
-    const res = await ordenesService.getAll();
-    setOrdenes(res.data);
-    setLoading(false);
+    try {
+      setLoading(true);
+
+      const filtros = {
+        estado: filtroEstado,
+        categoria: filtroCategoria,
+        comercio: filtroComercio,
+        rut: busqueda
+      };
+
+      const res = await ordenesService.getAll(page, 50, filtros);
+
+      setOrdenes(res.data.data);
+      setTotalPages(res.data.totalPages);
+
+    } catch (err) {
+      console.error("Error cargando OS:", err);
+      alert("Error cargando órdenes");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // ⭐ Recargar cuando cambia la página o los filtros
   useEffect(() => {
     cargarOrdenes();
-  }, []);
+  }, [page, filtroEstado, filtroCategoria, filtroComercio, busqueda]);
 
   const abrirCrear = () => {
     setOrdenEdit(null);
@@ -44,7 +74,7 @@ export default function OrdenesPage() {
 
     try {
       await ordenesService.remove(id);
-      setOrdenes(ordenes.filter((o) => o.id !== id));
+      cargarOrdenes();
     } catch (err) {
       console.error("Error eliminando OS:", err);
       alert("No se pudo eliminar la OS");
@@ -75,12 +105,47 @@ export default function OrdenesPage() {
       {loading ? (
         <div className="text-text-secondary">Cargando...</div>
       ) : (
-        <OrdenesTable
-          ordenes={ordenes}
-          onEdit={abrirEditar}
-          onView={abrirDetalles}
-          onDelete={handleDelete}
-        />
+        <>
+          <OrdenesTable
+            ordenes={ordenes}
+            onEdit={abrirEditar}
+            onView={abrirDetalles}
+            onDelete={handleDelete}
+
+            // ⭐ Pasamos los filtros al componente
+            filtroEstado={filtroEstado}
+            setFiltroEstado={setFiltroEstado}
+            filtroCategoria={filtroCategoria}
+            setFiltroCategoria={setFiltroCategoria}
+            filtroComercio={filtroComercio}
+            setFiltroComercio={setFiltroComercio}
+            busqueda={busqueda}
+            setBusqueda={setBusqueda}
+          />
+
+          {/* ⭐ PAGINACIÓN */}
+          <div className="flex items-center justify-center gap-4 mt-4">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+              className="px-3 py-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Anterior
+            </button>
+
+            <span className="text-sm">
+              Página {page} de {totalPages}
+            </span>
+
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+              className="px-3 py-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Siguiente
+            </button>
+          </div>
+        </>
       )}
 
       {/* MODAL CREAR/EDITAR */}
@@ -143,6 +208,7 @@ export default function OrdenesPage() {
     </div>
   );
 }
+
 
 
 

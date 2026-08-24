@@ -2,10 +2,19 @@ import api from "../utils/axios";
 
 export const ordenesService = {
   // ============================
-  // OS GLOBAL
+  // OS GLOBAL (paginación + filtros)
   // ============================
-
-  getAll: () => api.get("/ordenes"),
+  getAll: (page = 1, limit = 50, filtros = {}) =>
+    api.get("/ordenes", {
+      params: {
+        page,
+        limit,
+        estado: filtros.estado,
+        categoria: filtros.categoria,
+        comercio: filtros.comercio,
+        rut: filtros.rut
+      }
+    }),
 
   getById: (id) => api.get(`/ordenes/${id}`),
 
@@ -75,11 +84,10 @@ export const ordenesService = {
   },
 
   // ============================
-  // ⭐ NUEVO: REABRIR OS (SuperAdmin)
+  // ⭐ REABRIR OS (SuperAdmin)
   // ============================
   reabrir: async (id) => {
     try {
-      // Tu backend usa estado textual, no estado_id
       const res = await api.patch(`/ordenes/reabrir/${id}`);
       return res.data;
     } catch (err) {
@@ -101,6 +109,7 @@ export const ordenesService = {
     }
   }
 };
+
 
 
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/axios";
 import useAuth from "../../auth/useAuth";
-import { Link } from "react-router-dom";   // ⭐ IMPORTANTE
+import { Link } from "react-router-dom";
 
 import {
   BarChart,
@@ -30,6 +30,17 @@ import {
 export default function DashboardHome() {
   const { user } = useAuth();
 
+  const hoy = new Date();
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+
+  const [fechaInicio, setFechaInicio] = useState(
+    inicioMes.toISOString().split("T")[0]
+  );
+  const [fechaFin, setFechaFin] = useState(
+    finMes.toISOString().split("T")[0]
+  );
+
   const [stats, setStats] = useState({
     usuarios: 0,
     ordenes: 0,
@@ -49,139 +60,160 @@ export default function DashboardHome() {
     lastSync: null,
   });
 
+  const cargarDashboard = async () => {
+    try {
+      const [
+        usuariosRes,
+        ordenesRes,
+        pipelineRes,
+        adjuntosRes,
+        etapasRes,
+        tecnicosRes,
+      ] = await Promise.all([
+        api.get("/usuarios"),
+        api.get("/ordenes?page=1&limit=9999"),
+        api.get("/pipeline?page=1&limit=9999"),
+        api.get("/adjuntos"),
+        api.get("/pipeline-stages"),
+        api.get("/tecnicos"),
+      ]);
+
+      const inicio = new Date(fechaInicio);
+      const fin = new Date(fechaFin);
+
+      // ⭐ FIX UNIVERSAL PARA PAGINACIÓN Y RESPUESTAS NORMALES
+      const ordenesArray = Array.isArray(ordenesRes.data)
+        ? ordenesRes.data
+        : ordenesRes.data.data;
+
+      const pipelineArray = Array.isArray(pipelineRes.data)
+        ? pipelineRes.data
+        : pipelineRes.data.data;
+
+      const ordenesFiltradas = ordenesArray.filter((o) => {
+        const fecha = new Date(o.fecha_creacion || o.created_at);
+        return fecha >= inicio && fecha <= fin;
+      });
+
+      const pipelineFiltrado = pipelineArray.filter((p) => {
+        const fecha = new Date(p.fecha_creacion || p.created_at);
+        return fecha >= inicio && fecha <= fin;
+      });
+
+      const cantidadTecnicos = tecnicosRes.data.length;
+
+      setStats({
+        usuarios: usuariosRes.data.length,
+        ordenes: ordenesFiltradas.length,
+        oportunidades: pipelineFiltrado.length,
+        tecnicos: cantidadTecnicos,
+        adjuntos: adjuntosRes.data.length,
+        estados: etapasRes.data.length,
+      });
+
+      const estadosCount = {};
+      ordenesFiltradas.forEach((o) => {
+        estadosCount[o.estado] = (estadosCount[o.estado] || 0) + 1;
+      });
+      setOrdenesPorEstado(
+        Object.entries(estadosCount).map(([estado, count]) => ({
+          name: estado,
+          value: count,
+        }))
+      );
+
+      const etapasCount = {};
+      pipelineFiltrado.forEach((p) => {
+        const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
+        const nombreEtapa = etapaObj ? etapaObj.nombre : "Sin etapa";
+        const colorEtapa = etapaObj ? etapaObj.color : "#999999";
+
+        if (!etapasCount[nombreEtapa]) {
+          etapasCount[nombreEtapa] = {
+            etapa: nombreEtapa,
+            count: 0,
+            color: colorEtapa,
+          };
+        }
+
+        etapasCount[nombreEtapa].count += 1;
+      });
+
+      setPipelineEtapas(Object.values(etapasCount));
+
+      const palette = [
+        "#3B82F6",
+        "#10B981",
+        "#F59E0B",
+        "#EF4444",
+        "#8B5CF6",
+        "#EC4899",
+        "#14B8A6",
+        "#F97316",
+      ];
+
+      const carga = {};
+
+      ordenesFiltradas.forEach((o) => {
+        if (!o.tecnico_id) return;
+
+        const tecnico = tecnicosRes.data.find((t) => t.id === o.tecnico_id);
+        const nombreTecnico = tecnico ? tecnico.nombre : `Técnico ${o.tecnico_id}`;
+
+        if (!carga[nombreTecnico]) {
+          const index = Object.keys(carga).length;
+          carga[nombreTecnico] = {
+            tecnico: nombreTecnico,
+            count: 0,
+            color: palette[index % palette.length],
+          };
+        }
+
+        carga[nombreTecnico].count += 1;
+      });
+
+      setCargaTecnicos(Object.values(carga));
+
+      const actividadOrdenes = ordenesFiltradas
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5)
+        .map((o) => ({
+          tipo: "Orden",
+          id: o.id,
+          fecha: o.created_at,
+          descripcion: `Orden creada por ${o.creado_por}`,
+        }));
+
+      const actividadPipeline = pipelineFiltrado
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 5)
+        .map((p) => {
+          const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
+          return {
+            tipo: "Oportunidad",
+            id: p.id,
+            fecha: p.created_at,
+            descripcion: `Oportunidad en etapa ${
+              etapaObj ? etapaObj.nombre : "Sin etapa"
+            }`,
+          };
+        });
+
+      setActividad([...actividadOrdenes, ...actividadPipeline]);
+
+      setSystemStatus({
+        api: true,
+        latency: Math.floor(Math.random() * 120),
+        lastSync: new Date().toLocaleString(),
+      });
+    } catch (err) {
+      console.error("Error cargando dashboard:", err);
+      setSystemStatus({ api: false, latency: 0, lastSync: null });
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
-
-    const cargarDashboard = async () => {
-      try {
-        const [
-          usuariosRes,
-          ordenesRes,
-          pipelineRes,
-          adjuntosRes,
-          etapasRes,
-          tecnicosRes,
-        ] = await Promise.all([
-          api.get("/usuarios"),
-          api.get("/ordenes"),
-          api.get("/pipeline"),
-          api.get("/adjuntos"),
-          api.get("/pipeline-stages"),
-          api.get("/tecnicos"),
-        ]);
-
-        const cantidadTecnicos = tecnicosRes.data.length;
-
-        setStats({
-          usuarios: usuariosRes.data.length,
-          ordenes: ordenesRes.data.length,
-          oportunidades: pipelineRes.data.length,
-          tecnicos: cantidadTecnicos,
-          adjuntos: adjuntosRes.data.length,
-          estados: etapasRes.data.length,
-        });
-
-        const estadosCount = {};
-        ordenesRes.data.forEach((o) => {
-          estadosCount[o.estado] = (estadosCount[o.estado] || 0) + 1;
-        });
-        setOrdenesPorEstado(
-          Object.entries(estadosCount).map(([estado, count]) => ({
-            name: estado,
-            value: count,
-          }))
-        );
-
-        const etapasCount = {};
-        pipelineRes.data.forEach((p) => {
-          const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
-          const nombreEtapa = etapaObj ? etapaObj.nombre : "Sin etapa";
-          const colorEtapa = etapaObj ? etapaObj.color : "#999999";
-
-          if (!etapasCount[nombreEtapa]) {
-            etapasCount[nombreEtapa] = {
-              etapa: nombreEtapa,
-              count: 0,
-              color: colorEtapa,
-            };
-          }
-
-          etapasCount[nombreEtapa].count += 1;
-        });
-
-        setPipelineEtapas(Object.values(etapasCount));
-
-        const palette = [
-          "#3B82F6",
-          "#10B981",
-          "#F59E0B",
-          "#EF4444",
-          "#8B5CF6",
-          "#EC4899",
-          "#14B8A6",
-          "#F97316",
-        ];
-
-        const carga = {};
-
-        ordenesRes.data.forEach((o) => {
-          if (!o.tecnico_id) return;
-
-          const tecnico = tecnicosRes.data.find((t) => t.id === o.tecnico_id);
-          const nombreTecnico = tecnico ? tecnico.nombre : `Técnico ${o.tecnico_id}`;
-
-          if (!carga[nombreTecnico]) {
-            const index = Object.keys(carga).length;
-            carga[nombreTecnico] = {
-              tecnico: nombreTecnico,
-              count: 0,
-              color: palette[index % palette.length],
-            };
-          }
-
-          carga[nombreTecnico].count += 1;
-        });
-
-        setCargaTecnicos(Object.values(carga));
-
-        const actividadOrdenes = ordenesRes.data
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          .slice(0, 5)
-          .map((o) => ({
-            tipo: "Orden",
-            id: o.id,
-            fecha: o.created_at,
-            descripcion: `Orden creada por ${o.creado_por}`,
-          }));
-
-        const actividadPipeline = pipelineRes.data
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          .slice(0, 5)
-          .map((p) => {
-            const etapaObj = etapasRes.data.find((e) => e.id === p.stage);
-            return {
-              tipo: "Oportunidad",
-              id: p.id,
-              fecha: p.created_at,
-              descripcion: `Oportunidad en etapa ${
-                etapaObj ? etapaObj.nombre : "Sin etapa"
-              }`,
-            };
-          });
-
-        setActividad([...actividadOrdenes, ...actividadPipeline]);
-
-        setSystemStatus({
-          api: true,
-          latency: Math.floor(Math.random() * 120),
-          lastSync: new Date().toLocaleString(),
-        });
-      } catch (err) {
-        console.error("Error cargando dashboard:", err);
-        setSystemStatus({ api: false, latency: 0, lastSync: null });
-      }
-    };
-
     cargarDashboard();
   }, [user]);
 
@@ -191,6 +223,35 @@ export default function DashboardHome() {
       <div>
         <h1 className="text-4xl font-bold text-primary">Dashboard Corporativo</h1>
         <p className="text-gray-600 text-lg">Bienvenido, {user?.nombre}</p>
+      </div>
+
+      <div className="flex gap-4 items-end">
+        <div>
+          <label className="text-sm text-gray-600">Fecha inicio</label>
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
+            className="border p-2 rounded"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600">Fecha fin</label>
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
+            className="border p-2 rounded"
+          />
+        </div>
+
+        <button
+          onClick={cargarDashboard}
+          className="px-4 py-2 bg-primary text-white rounded-lg"
+        >
+          Filtrar
+        </button>
       </div>
 
       <QuickActions />
@@ -299,8 +360,6 @@ export default function DashboardHome() {
   );
 }
 
-/* COMPONENTES PRO */
-
 function MetricCard({ title, value, icon: Icon, color }) {
   return (
     <div className="p-5 rounded-xl border border-gray-200 shadow-sm bg-white flex items-center gap-4">
@@ -346,6 +405,9 @@ function QuickButton({ title, icon: Icon, to }) {
     </Link>
   );
 }
+
+
+
 
 
 

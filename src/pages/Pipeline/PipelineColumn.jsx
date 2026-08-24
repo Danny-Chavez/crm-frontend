@@ -1,15 +1,16 @@
-import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import OpportunityCard from "./PipelineCard";
 
-// ⭐ Wrapper que maneja el drag correctamente SIN duplicidad
-function DraggableWrapper({ id, children }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
+function SortableCard({ id, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
 
   const style = {
-    transform: transform
-      ? `translate(${transform.x}px, ${transform.y}px)`
-      : undefined,
-    transition: "transform 0.2s ease",
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: transform ? 9998 : "auto",
   };
 
   return (
@@ -34,14 +35,17 @@ export default function StageColumn({
   setActividadOportunidad,
   setShowActividadModal,
   onCustomer360,
-  activeId, // ⭐ viene desde Pipeline.jsx
+  activeId,
 }) {
-  const { setNodeRef } = useDroppable({ id: stage.id });
 
-  const totalMonto = opportunities.reduce(
-    (acc, o) => acc + Number(o.amount || o.monto || 0),
-    0
-  );
+  // ⭐ FIX CRÍTICO: droppable con data para identificar la columna
+  const { setNodeRef } = useDroppable({
+    id: stage.id,
+    data: {
+      id: stage.id,
+      type: "column",
+    },
+  });
 
   const sortedOps = [...opportunities].sort(
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -66,26 +70,18 @@ export default function StageColumn({
             {sortedOps.length} ops
           </span>
         </div>
-
-        <p className="text-xs text-gray-500">
-          Total:{" "}
-          {totalMonto.toLocaleString("es-CL", {
-            minimumFractionDigits: 0,
-          })}
-        </p>
       </div>
 
-      <div className="p-4 pt-2 max-h-[75vh] overflow-y-auto pr-2">
+      <div className="p-4 pt-2 max-h-[75vh] overflow-visible pr-2">
         {sortedOps.map((op) => {
           const isDragging = activeId === op.id;
 
           return (
             <div key={op.id}>
               {isDragging ? (
-                // ⭐ Placeholder que ocupa el espacio pero NO muestra la tarjeta
-                <div className="h-[120px] rounded-lg bg-transparent" />
+                <div className="h-[130px] rounded-lg bg-transparent" />
               ) : (
-                <DraggableWrapper id={op.id}>
+                <SortableCard id={op.id}>
                   <OpportunityCard
                     opportunity={op}
                     onEdit={onEdit}
@@ -95,21 +91,18 @@ export default function StageColumn({
                     setShowActividadModal={setShowActividadModal}
                     onCustomer360={onCustomer360}
                   />
-                </DraggableWrapper>
+                </SortableCard>
               )}
             </div>
           );
         })}
-
-        {sortedOps.length === 0 && (
-          <p className="text-xs text-gray-400 italic">
-            Sin oportunidades en esta etapa.
-          </p>
-        )}
       </div>
     </div>
   );
 }
+
+
+
 
 
 

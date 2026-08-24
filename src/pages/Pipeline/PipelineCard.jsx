@@ -1,5 +1,5 @@
 // SIN useDraggable aquí
-export default function OpportunityCard({
+export default function PipelineCard({
   opportunity,
   onEdit,
   onViewOS,
@@ -13,8 +13,11 @@ export default function OpportunityCard({
 
   return (
     <div
-      className={`bg-white p-3 rounded-xl border border-gray-100 mb-3 transition-all duration-300
-        ${dragging ? "shadow-2xl scale-[1.03] pointer-events-none" : "shadow-sm hover:shadow-lg"}
+      className={`
+        bg-white p-3 rounded-xl border border-gray-100 mb-3 transition-all duration-300
+        ${dragging
+          ? "shadow-2xl scale-[1.03] pointer-events-none z-[9999]"   // ⭐ FIX REAL
+          : "shadow-sm hover:shadow-lg"}
       `}
     >
       <div className="flex justify-between items-center mb-1">
@@ -85,6 +88,7 @@ export default function OpportunityCard({
     </div>
   );
 }
+
 
 
 

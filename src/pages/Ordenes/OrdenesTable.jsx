@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import {
   EyeIcon,
   PencilSquareIcon,
@@ -7,8 +6,8 @@ import {
   MagnifyingGlassIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
-
 import { ordenesService } from "../../services/ordenes.service";
+import { useState } from "react";
 
 // ⭐ IMPORTANTE: definir user para evitar ReferenceError
 const getUser = () => {
@@ -19,15 +18,26 @@ const getUser = () => {
   }
 };
 
-export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
+export default function OrdenesTable({
+  ordenes,
+  onEdit,
+  onView,
+  onDelete,
+
+  filtroEstado,
+  setFiltroEstado,
+  filtroCategoria,
+  setFiltroCategoria,
+  filtroComercio,
+  setFiltroComercio,
+  busqueda,
+  setBusqueda,
+}) {
   const user = getUser();
 
-  const [filtroEstado, setFiltroEstado] = useState("todos");
-  const [filtroCategoria, setFiltroCategoria] = useState("todos");
-  const [filtroComercio, setFiltroComercio] = useState("");
-  const [busqueda, setBusqueda] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const porPagina = 10;
+  // ⭐ Estados locales para evitar bloqueo del input
+  const [localComercio, setLocalComercio] = useState(filtroComercio);
+  const [localRut, setLocalRut] = useState(busqueda);
 
   /* ⭐ LIMPIAR OS ANTES DE ENVIARLA AL FORMULARIO */
   const limpiarOS = (o) => ({
@@ -51,11 +61,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
   };
 
   const normalizar = (v) =>
-    v
-      ?.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim();
+    v?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
   /* ⭐ SANEAR CAMPOS QUE PUEDAN CONTENER /uploads */
   const sanearCampo = (v) => {
@@ -75,52 +81,15 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     return "bg-gray-100 text-gray-700";
   };
 
-  const estadosReales = [...new Set(ordenes.map((o) => o.estado))];
-  const categoriasReales = [...new Set(ordenes.map((o) => o.categoria))];
+  /* ⭐ EXPORTAR EXCEL */
+  const exportarExcel = () => {
+    if (ordenes.length === 0) return;
 
-  const filtradas = useMemo(() => {
-    return ordenes
-      .filter((o) =>
-        filtroEstado === "todos"
-          ? true
-          : normalizar(o.estado) === normalizar(filtroEstado)
-      )
-      .filter((o) =>
-        filtroCategoria === "todos"
-          ? true
-          : normalizar(o.categoria) === normalizar(filtroCategoria)
-      )
-      .filter((o) =>
-        filtroComercio.trim() === ""
-          ? true
-          : o.comercio_id?.toString().includes(filtroComercio)
-      )
-      .filter((o) =>
-        o.cliente_rut?.toLowerCase().includes(busqueda.toLowerCase())
-      )
-      .sort(
-        (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
-      );
-  }, [ordenes, filtroEstado, filtroCategoria, filtroComercio, busqueda]);
-
-  const totalPaginas = Math.ceil(filtradas.length / porPagina);
-  const visibles = filtradas.slice(
-    (pagina - 1) * porPagina,
-    pagina * porPagina
-  );
-
- const exportarExcel = () => {
-    if (filtradas.length === 0) return;
-
-    // ⭐ Obtener todas las claves de la primera OS
-    const encabezados = Object.keys(filtradas[0]);
-
-    // ⭐ Construir filas dinámicas con TODOS los campos
-    const filas = filtradas.map((o) =>
+    const encabezados = Object.keys(ordenes[0]);
+    const filas = ordenes.map((o) =>
       encabezados.map((key) => sanearCampo(o[key]))
     );
 
-    // ⭐ Generar CSV
     const csvContent =
       encabezados.join(",") +
       "\n" +
@@ -138,21 +107,27 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
     URL.revokeObjectURL(url);
   };
 
+  // ⭐ Obtener valores reales para los filtros (solo de la página actual)
+  const estadosReales = [...new Set(ordenes.map((o) => o.estado))];
+  const categoriasReales = [...new Set(ordenes.map((o) => o.categoria))];
 
   return (
     <div className="bg-surface rounded-xl shadow-md overflow-hidden font-sans p-4">
+
       {/* FILTROS */}
       <div className="flex flex-wrap justify-between items-center mb-4 gap-4">
+
         {/* FILTRO ESTADO */}
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="w-5 h-5 text-primary" />
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-text-secondary flex items-center gap-1">
+            <FunnelIcon className="w-4 h-4 text-primary" />
+            Estado
+          </label>
+
           <select
             value={filtroEstado}
-            onChange={(e) => {
-              setFiltroEstado(e.target.value);
-              setPagina(1);
-            }}
-            className="border border-border rounded-lg p-2 text-sm"
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="border border-border rounded-lg p-2 text-sm mt-1"
           >
             <option value="todos">Todos</option>
             {estadosReales.map((estado) => (
@@ -164,15 +139,16 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
         </div>
 
         {/* FILTRO CATEGORÍA */}
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="w-5 h-5 text-primary" />
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-text-secondary flex items-center gap-1">
+            <FunnelIcon className="w-4 h-4 text-primary" />
+            Categoría
+          </label>
+
           <select
             value={filtroCategoria}
-            onChange={(e) => {
-              setFiltroCategoria(e.target.value);
-              setPagina(1);
-            }}
-            className="border border-border rounded-lg p-2 text-sm"
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            className="border border-border rounded-lg p-2 text-sm mt-1"
           >
             <option value="todos">Todas</option>
             {categoriasReales.map((cat) => (
@@ -184,41 +160,46 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
         </div>
 
         {/* FILTRO COMERCIO */}
-        <div className="flex items-center gap-2">
-          <MagnifyingGlassIcon className="w-5 h-5 text-primary" />
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-text-secondary flex items-center gap-1">
+            <MagnifyingGlassIcon className="w-4 h-4 text-primary" />
+            Código comercio
+          </label>
+
           <input
             type="text"
-            placeholder="Código comercio..."
-            value={filtroComercio}
-            onChange={(e) => {
-              setFiltroComercio(e.target.value);
-              setPagina(1);
-            }}
-            className="border border-border rounded-lg p-2 text-sm w-48"
+            placeholder="Ej: 2220000289"
+            value={localComercio}
+            onChange={(e) => setLocalComercio(e.target.value)}
+            onBlur={() => setFiltroComercio(localComercio)}
+            className="border border-border rounded-lg p-2 text-sm mt-1 w-48"
           />
         </div>
 
         {/* BÚSQUEDA RUT */}
-        <div className="flex items-center gap-2">
-          <MagnifyingGlassIcon className="w-5 h-5 text-primary" />
+        <div className="flex flex-col">
+          <label className="text-sm font-medium text-text-secondary flex items-center gap-1">
+            <MagnifyingGlassIcon className="w-4 h-4 text-primary" />
+            Buscar por RUT
+          </label>
+
           <input
             type="text"
-            placeholder="Buscar cliente (RUT)..."
-            value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-              setPagina(1);
-            }}
-            className="border border-border rounded-lg p-2 text-sm w-48"
+            placeholder="Ej: 12.345.678-9"
+            value={localRut}
+            onChange={(e) => setLocalRut(e.target.value)}
+            onBlur={() => setBusqueda(localRut)}
+            className="border border-border rounded-lg p-2 text-sm mt-1 w-48"
           />
         </div>
 
         {/* EXPORTAR EXCEL */}
         <button
           onClick={exportarExcel}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition self-end"
         >
-          <ArrowDownTrayIcon className="w-5 h-5" /> Exportar Excel
+          <ArrowDownTrayIcon className="w-5 h-5" />
+          Exportar Excel
         </button>
       </div>
 
@@ -226,19 +207,19 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
       <table className="w-full text-sm text-text-main">
         <thead className="bg-primary text-white">
           <tr>
-            <th className="p-4 font-semibold text-left">OS #</th>
-            <th className="p-4 font-semibold text-left">Cliente (RUT)</th>
-            <th className="p-4 font-semibold text-left">Nombre Fantasía</th>
-            <th className="p-4 font-semibold text-left">Estado</th>
-            <th className="p-4 font-semibold text-left">Fecha creación</th>
-            <th className="p-4 font-semibold text-left">Técnico</th>
-            <th className="p-4 font-semibold text-left">Categoría</th>
-            <th className="p-4 font-semibold text-right">Acciones</th>
+            <th className="p-4 text-left">OS #</th>
+            <th className="p-4 text-left">Cliente (RUT)</th>
+            <th className="p-4 text-left">Nombre Fantasía</th>
+            <th className="p-4 text-left">Estado</th>
+            <th className="p-4 text-left">Fecha creación</th>
+            <th className="p-4 text-left">Técnico</th>
+            <th className="p-4 text-left">Categoría</th>
+            <th className="p-4 text-right">Acciones</th>
           </tr>
         </thead>
 
         <tbody>
-          {visibles.map((o, index) => (
+          {ordenes.map((o, index) => (
             <tr
               key={o.id}
               className={`border-t border-border hover:bg-gray-50 transition ${
@@ -259,7 +240,7 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
               {/* Cliente */}
               <td className="p-4">{sanearCampo(o.cliente_rut)}</td>
 
-              {/* ⭐ Nombre Fantasía */}
+              {/* Nombre Fantasía */}
               <td className="p-4">
                 {sanearCampo(o.nombre_fantasia) || (
                   <span className="text-gray-400">—</span>
@@ -288,7 +269,9 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
               <td className="p-4">{sanearCampo(o.tecnico) || "Sin técnico"}</td>
 
               {/* Categoría */}
-              <td className="p-4">{sanearCampo(o.categoria) || "Sin categoría"}</td>
+              <td className="p-4">
+                {sanearCampo(o.categoria) || "Sin categoría"}
+              </td>
 
               {/* Acciones */}
               <td className="p-4">
@@ -303,7 +286,9 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                   </button>
 
                   {/* Editar */}
-                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
+                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(
+                    user?.rol
+                  ) && (
                     <button
                       onClick={() => onEdit(limpiarOS(o))}
                       className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
@@ -313,7 +298,9 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
                   )}
 
                   {/* Clonar */}
-                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(user?.rol) && (
+                  {["Técnico", "Admin", "SuperAdmin", "Supervisor"].includes(
+                    user?.rol
+                  ) && (
                     <button
                       onClick={() => handleClone(o.id)}
                       className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition flex items-center gap-1"
@@ -338,33 +325,11 @@ export default function OrdenesTable({ ordenes, onEdit, onView, onDelete }) {
           ))}
         </tbody>
       </table>
-
-
-      {/* PAGINACIÓN */}
-      <div className="flex justify-center items-center gap-3 mt-4">
-        <button
-          disabled={pagina === 1}
-          onClick={() => setPagina(pagina - 1)}
-          className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
-        >
-          ←
-        </button>
-
-        <span className="text-sm font-semibold">
-          Página {pagina} de {totalPaginas}
-        </span>
-
-        <button
-          disabled={pagina === totalPaginas}
-          onClick={() => setPagina(pagina + 1)}
-          className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded disabled:opacity-50"
-        >
-          →
-        </button>
-      </div>
     </div>
   );
 }
+
+
 
 
 

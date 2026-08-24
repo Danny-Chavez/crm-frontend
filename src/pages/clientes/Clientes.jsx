@@ -4,15 +4,19 @@ import ClienteForm from "./ClienteForm";
 import Customer360 from "../../components/Customer360";
 import { useLocation } from "react-router-dom";
 
-
-
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ⭐ Paginación
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20); // puedes ajustar
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const location = useLocation();                 // ⭐ NUEVO
-  const params = new URLSearchParams(location.search); // ⭐ NUEVO
+  const location = useLocation();
 
   // ⭐ Filtro por RUT
   const [filtroRut, setFiltroRut] = useState("");
@@ -20,14 +24,23 @@ const Clientes = () => {
   // ⭐ Modo solo lectura (Ver)
   const [viewMode, setViewMode] = useState(false);
 
-  // ⭐ NUEVO: Customer360 modal
+  // ⭐ Customer360 modal
   const [showCustomer360, setShowCustomer360] = useState(false);
   const [customerRut, setCustomerRut] = useState(null);
 
-  const fetchClientes = async () => {
+  const fetchClientes = async (pageNumber = 1) => {
     try {
-      const res = await api.get("/clientes");
-      setClientes(res.data);
+      setLoading(true);
+
+      const res = await api.get(
+        `/clientes?page=${pageNumber}&limit=${limit}&rut=${filtroRut}`
+      );
+
+      setClientes(res.data.data);
+      setPage(res.data.page);
+      setTotalPages(res.data.totalPages);
+      setTotalItems(res.data.totalItems);
+
     } catch (err) {
       console.error("Error cargando clientes:", err);
     } finally {
@@ -36,8 +49,13 @@ const Clientes = () => {
   };
 
   useEffect(() => {
-    fetchClientes();
+    fetchClientes(1);
   }, []);
+
+  // ⭐ Refrescar cuando cambia el filtro
+  useEffect(() => {
+    fetchClientes(1);
+  }, [filtroRut]);
 
   const handleEdit = (cliente) => {
     setSelectedCliente(cliente);
@@ -46,7 +64,6 @@ const Clientes = () => {
   };
 
   const handleView = (cliente) => {
-    // ⭐ Ahora abre Customer360
     setCustomerRut(cliente.rut);
     setShowCustomer360(true);
   };
@@ -62,18 +79,13 @@ const Clientes = () => {
 
     try {
       await api.delete(`/clientes/${id}`);
-      fetchClientes();
+      fetchClientes(page);
     } catch (err) {
       console.error("Error eliminando cliente:", err);
     }
   };
 
   if (loading) return <p>Cargando clientes...</p>;
-
-  // ⭐ Filtrado por RUT
-  const clientesFiltrados = clientes.filter((c) =>
-    filtroRut ? c.rut?.toLowerCase().includes(filtroRut.toLowerCase()) : true
-  );
 
   return (
     <div className="p-6 flex flex-col gap-6">
@@ -90,7 +102,7 @@ const Clientes = () => {
         </button>
       </div>
 
-      {/* ⭐ Filtro por RUT — estilo OS */}
+      {/* ⭐ Filtro por RUT */}
       <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
         <h2 className="text-lg font-semibold mb-4 text-gray-800">Filtros</h2>
 
@@ -114,7 +126,7 @@ const Clientes = () => {
           cliente={selectedCliente}
           viewMode={viewMode}
           onClose={() => setShowForm(false)}
-          onSaved={fetchClientes}
+          onSaved={() => fetchClientes(page)}
         />
       )}
 
@@ -143,7 +155,7 @@ const Clientes = () => {
           </thead>
 
           <tbody>
-            {clientesFiltrados.map((c) => (
+            {clientes.map((c) => (
               <tr key={c.id} className="hover:bg-gray-50 transition">
                 <td className="p-3 border">{c.rut}</td>
                 <td className="p-3 border">{c.nombre_empresa}</td>
@@ -152,9 +164,7 @@ const Clientes = () => {
                 <td className="p-3 border">{c.vendedor}</td>
                 <td className="p-3 border">{c.estado}</td>
 
-                {/* ⭐ Botones corporativos */}
                 <td className="p-3 border flex gap-2 justify-center items-center">
-
                   <button
                     onClick={() => handleView(c)}
                     className="px-3 py-1 rounded-lg bg-gray-600 text-white text-xs hover:bg-gray-700 transition"
@@ -184,7 +194,6 @@ const Clientes = () => {
                   >
                     Comercios
                   </button>
-
                 </td>
               </tr>
             ))}
@@ -192,11 +201,42 @@ const Clientes = () => {
         </table>
       </div>
 
+      {/* ⭐ Paginación */}
+      <div className="flex items-center justify-center gap-4 mt-4">
+
+        <button
+          disabled={page <= 1}
+          onClick={() => fetchClientes(page - 1)}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          ← Anterior
+        </button>
+
+        <span className="text-gray-700">
+          Página {page} de {totalPages}
+        </span>
+
+        <button
+          disabled={page >= totalPages}
+          onClick={() => fetchClientes(page + 1)}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+        >
+          Siguiente →
+        </button>
+
+      </div>
+
+      <p className="text-sm text-gray-500 mt-2 text-center">
+        Total clientes: {totalItems}
+      </p>
+
     </div>
   );
 };
 
 export default Clientes;
+
+
 
 
 

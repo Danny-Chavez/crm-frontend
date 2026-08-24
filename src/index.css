@@ -90,6 +90,16 @@
   pointer-events: none;
 }
 
+.dnd-overlay {
+  z-index: 9999 !important;
+  pointer-events: none;
+}
 
+.dragging-card {
+  position: relative;
+  z-index: 9999 !important;
+  transform: scale(1.02);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
 
 
